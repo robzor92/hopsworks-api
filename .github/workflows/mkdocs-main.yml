@@ -1,11 +1,11 @@
-name: mkdocs-master
+name: mkdocs-main
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
-  publish-master:
+  publish-main:
     runs-on: ubuntu-latest
 
     steps:

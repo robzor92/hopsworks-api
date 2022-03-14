@@ -29,7 +29,9 @@ class ExecutionsApi:
         path_params = ["project", self._project_id, "jobs", job.name, "executions"]
 
         return execution.Execution.from_response_json(
-            _client._send_request("POST", path_params, data=args), self._project_id, job.name
+            _client._send_request("POST", path_params, data=args),
+            self._project_id,
+            job.name,
         )
 
     def get(self, job, id):
@@ -45,7 +47,9 @@ class ExecutionsApi:
 
         headers = {"content-type": "application/json"}
         return execution.Execution.from_response_json(
-            _client._send_request("GET", path_params, headers=headers), self._project_id, job.name
+            _client._send_request("GET", path_params, headers=headers),
+            self._project_id,
+            job.name,
         )
 
     def get_all(self, job):
@@ -59,7 +63,8 @@ class ExecutionsApi:
             _client._send_request(
                 "GET", path_params, headers=headers, query_params=query_params
             ),
-            self._project_id, job.name
+            self._project_id,
+            job.name,
         )
 
     def delete(self, job, id):

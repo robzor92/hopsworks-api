@@ -26,7 +26,9 @@ class GitEngine:
         project_id,
         project_name,
     ):
-        self._git_op_execution_api = git_op_execution_api.GitOpExecutionApi(project_id, project_name)
+        self._git_op_execution_api = git_op_execution_api.GitOpExecutionApi(
+            project_id, project_name
+        )
         self._log = logging.getLogger(__name__)
 
     def execute_op_blocking(self, git_op, command):

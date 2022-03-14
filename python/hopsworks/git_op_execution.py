@@ -48,7 +48,9 @@ class GitOpExecution:
         self._state = state
         self._command_result_message = command_result_message
         self._config_secret = config_secret
-        self._repository = git_repo.GitRepo.from_response_json(repository, project_id, project_name)
+        self._repository = git_repo.GitRepo.from_response_json(
+            repository, project_id, project_name
+        )
 
     @classmethod
     def from_response_json(cls, json_dict, project_id, project_name):

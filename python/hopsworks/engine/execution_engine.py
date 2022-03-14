@@ -20,6 +20,7 @@ import logging
 import time
 import uuid
 
+
 class ExecutionEngine:
     def __init__(self, project_id=None):
         self._dataset_api = dataset_api.DatasetApi(project_id)
@@ -27,7 +28,9 @@ class ExecutionEngine:
         self._log = logging.getLogger(__name__)
 
     def download_logs(self, execution):
-        job_logs_dir = "logs-job-{}-exec-{}_{}".format(execution.job_name, str(execution.id), str(uuid.uuid4())[:16])
+        job_logs_dir = "logs-job-{}-exec-{}_{}".format(
+            execution.job_name, str(execution.id), str(uuid.uuid4())[:16]
+        )
         download_log_dir = os.path.join(os.getcwd(), job_logs_dir)
 
         if not os.path.exists(download_log_dir):
@@ -48,7 +51,6 @@ class ExecutionEngine:
             err_path = self._dataset_api.download(
                 execution.stderr_path, download_log_dir
             )
-            
         return out_path, err_path
 
     def wait_until_finished(self, job, execution):

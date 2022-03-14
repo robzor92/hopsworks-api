@@ -51,7 +51,9 @@ class GitRemote:
                 for remote in json_decamelized["items"]
             ]
         else:
-            return cls(**json_decamelized, project_id=project_id, project_name=project_name)
+            return cls(
+                **json_decamelized, project_id=project_id, project_name=project_name
+            )
 
     @property
     def url(self):

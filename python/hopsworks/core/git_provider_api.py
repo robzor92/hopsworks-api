@@ -40,7 +40,9 @@ class GitProviderApi:
         path_params = ["users", "git", "provider"]
 
         return git_provider.GitProvider.from_response_json(
-            _client._send_request("GET", path_params), self._project_id, self._project_name
+            _client._send_request("GET", path_params),
+            self._project_id,
+            self._project_name,
         )
 
     def get_provider(self, provider: str):
@@ -52,7 +54,9 @@ class GitProviderApi:
         path_params = ["users", "git", "provider"]
 
         providers = git_provider.GitProvider.from_response_json(
-            _client._send_request("GET", path_params), self._project_id, self._project_name
+            _client._send_request("GET", path_params),
+            self._project_id,
+            self._project_name,
         )
         for p in providers:
             if p.git_provider.lower() == provider.lower():
@@ -75,7 +79,8 @@ class GitProviderApi:
             _client._send_request(
                 "POST", path_params, headers=headers, data=json.dumps(provider_config)
             ),
-            self._project_id, self._project_name
+            self._project_id,
+            self._project_name,
         )
 
     def delete_provider(self, provider: str):

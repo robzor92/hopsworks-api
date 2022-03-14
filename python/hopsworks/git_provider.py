@@ -40,7 +40,9 @@ class GitProvider:
         self._token = token
         self._git_provider = git_provider
 
-        self._git_provider_api = git_provider_api.GitProviderApi(project_id, project_name)
+        self._git_provider_api = git_provider_api.GitProviderApi(
+            project_id, project_name
+        )
 
     @classmethod
     def from_response_json(cls, json_dict, project_id, project_name):

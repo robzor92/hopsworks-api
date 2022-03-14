@@ -68,7 +68,9 @@ class GitRepo:
                 cls(**repo, project_id=project_id) for repo in json_decamelized["items"]
             ]
         else:
-            return cls(**json_decamelized, project_id=project_id, project_name=project_name)
+            return cls(
+                **json_decamelized, project_id=project_id, project_name=project_name
+            )
 
     @property
     def id(self):

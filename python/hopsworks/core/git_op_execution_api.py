@@ -44,5 +44,7 @@ class GitOpExecutionApi:
         query_params = {"expand": "repository"}
 
         return git_op_execution.GitOpExecution.from_response_json(
-            _client._send_request("GET", path_params, query_params=query_params), self._project_id, self._project_name
+            _client._send_request("GET", path_params, query_params=query_params),
+            self._project_id,
+            self._project_name,
         )

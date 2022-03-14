@@ -40,7 +40,9 @@ class GitReposApi:
         self._project_id = project_id
         self._project_name = project_name
         self._git_engine = git_engine.GitEngine(project_id, project_name)
-        self._git_provider_api = git_provider_api.GitProviderApi(project_id, project_name)
+        self._git_provider_api = git_provider_api.GitProviderApi(
+            project_id, project_name
+        )
 
     def clone(self, url: str, path: str, provider: str, branch: str = None):
 
@@ -67,7 +69,9 @@ class GitReposApi:
                 headers=headers,
                 data=json.dumps(clone_config),
                 query_params=query_params,
-            ), self._project_id, self._project_name
+            ),
+            self._project_id,
+            self._project_name,
         )
         git_op = self._git_engine.execute_op_blocking(git_op, "CLONE")
         return self.get_repo(git_op.repository.name, git_op.repository.path)
@@ -86,7 +90,8 @@ class GitReposApi:
         query_params = {"expand": "creator"}
         return git_repo.GitRepo.from_response_json(
             _client._send_request("GET", path_params, query_params=query_params),
-            self._project_id, self._project_name
+            self._project_id,
+            self._project_name,
         )
 
     def get_providers(self):
@@ -113,7 +118,8 @@ class GitReposApi:
 
         repos = git_repo.GitRepo.from_response_json(
             _client._send_request("GET", path_params, query_params=query_params),
-            self._project_id, self._project_name
+            self._project_id,
+            self._project_name,
         )
 
         if path is not None:
@@ -161,7 +167,9 @@ class GitReposApi:
         git_op = git_op_execution.GitOpExecution.from_response_json(
             _client._send_request(
                 "POST", path_params, headers=headers, query_params=query_params
-            ), self._project_id, self._project_name
+            ),
+            self._project_id,
+            self._project_name,
         )
         _ = self._git_engine.execute_op_blocking(git_op, query_params["action"])
 
@@ -187,7 +195,9 @@ class GitReposApi:
         git_op = git_op_execution.GitOpExecution.from_response_json(
             _client._send_request(
                 "POST", path_params, headers=headers, query_params=query_params
-            ), self._project_id, self._project_name
+            ),
+            self._project_id,
+            self._project_name,
         )
         _ = self._git_engine.execute_op_blocking(git_op, query_params["action"])
 
@@ -214,7 +224,9 @@ class GitReposApi:
         git_op = git_op_execution.GitOpExecution.from_response_json(
             _client._send_request(
                 "POST", path_params, headers=headers, query_params=query_params
-            ), self._project_id, self._project_name
+            ),
+            self._project_id,
+            self._project_name,
         )
         _ = self._git_engine.execute_op_blocking(git_op, query_params["action"])
 
@@ -239,7 +251,9 @@ class GitReposApi:
                 headers=headers,
                 query_params=query_params,
                 data=json.dumps({}),
-            ), self._project_id, self._project_name
+            ),
+            self._project_id,
+            self._project_name,
         )
         git_op = self._git_engine.execute_op_blocking(git_op, query_params["action"])
 
@@ -281,7 +295,9 @@ class GitReposApi:
                 headers=headers,
                 query_params=query_params,
                 data=json.dumps(commit_config),
-            ), self._project_id, self._project_name
+            ),
+            self._project_id,
+            self._project_name,
         )
         _ = self._git_engine.execute_op_blocking(git_op, query_params["action"])
 
@@ -312,7 +328,9 @@ class GitReposApi:
                 headers=headers,
                 query_params=query_params,
                 data=json.dumps(push_config),
-            ), self._project_id, self._project_name
+            ),
+            self._project_id,
+            self._project_name,
         )
         _ = self._git_engine.execute_op_blocking(git_op, query_params["action"])
 
@@ -343,7 +361,9 @@ class GitReposApi:
                 headers=headers,
                 query_params=query_params,
                 data=json.dumps(push_config),
-            ), self._project_id, self._project_name
+            ),
+            self._project_id,
+            self._project_name,
         )
         _ = self._git_engine.execute_op_blocking(git_op, query_params["action"])
 
@@ -371,7 +391,9 @@ class GitReposApi:
                 headers=headers,
                 query_params=query_params,
                 data=json.dumps({"files": files}),
-            ), self._project_id, self._project_name
+            ),
+            self._project_id,
+            self._project_name,
         )
         _ = self._git_engine.execute_op_blocking(git_op, "CHECKOUT_FILES")
 
