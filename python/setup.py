@@ -17,6 +17,7 @@ setup(
     version=__version__,
     install_requires=[
         "hsfs",
+        "hsml",
         "pyhumps==1.6.1",
         "requests",
         "furl",
@@ -36,8 +37,7 @@ setup(
             "mike==0.5.5",
             "sphinx==3.5.4",
             "keras_autodoc @ git+https://git@github.com/moritzmeister/keras-autodoc@split-tags-properties",
-            "markdown-include"],
-        "hive": ["pyhopshive[thrift]"]
+            "markdown-include"]
     },
     author="Logical Clocks AB",
     author_email="robin@logicalclocks.com",
