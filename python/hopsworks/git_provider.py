@@ -37,7 +37,6 @@ class GitProvider:
         project_name=None,
     ):
         self._username = username
-        self._token = token
         self._git_provider = git_provider
 
         self._git_provider_api = git_provider_api.GitProviderApi(
@@ -58,14 +57,12 @@ class GitProvider:
 
     @property
     def username(self):
+        """Username set for the provider"""
         return self._username
 
     @property
-    def token(self):
-        return self._token
-
-    @property
     def git_provider(self):
+        """Name of the provider, can be GitHub, GitLab or BitBucket"""
         return self._git_provider
 
     def delete(self):

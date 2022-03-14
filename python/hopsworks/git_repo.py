@@ -74,30 +74,37 @@ class GitRepo:
 
     @property
     def id(self):
+        """Id of the git repo"""
         return self._id
 
     @property
     def name(self):
+        """Name of the git repo"""
         return self._name
 
     @property
     def path(self):
+        """Path to the git repo in the Hopsworks Filesystem"""
         return self._path
 
     @property
     def creator(self):
+        """Creator of the git repo"""
         return self._creator
 
     @property
     def provider(self):
+        """Git provider for the repo, can be GitHub, GitLab or BitBucket"""
         return self._provider
 
     @property
     def current_branch(self):
+        """The current branch for the git repo"""
         return self._current_branch
 
     @property
     def current_commit(self):
+        """The current commit for the git repo"""
         return self._current_commit
 
     def status(self):
@@ -169,7 +176,7 @@ class GitRepo:
         self._git_repo_api._checkout(self.id, commit=commit, force=force)
 
     def commit(self, message: str, all: bool = True, files: List[str] = None):
-        """Add changes, new files and commit them
+        """Add changes and new files, and then commit them
         # Arguments
             message: name of the remote
             all: automatically stage files that have been modified and deleted, but new files are not affected

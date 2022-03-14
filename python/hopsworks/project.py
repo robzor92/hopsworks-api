@@ -60,22 +60,27 @@ class Project:
 
     @property
     def id(self):
+        """Id of the project"""
         return self._id
 
     @property
     def name(self):
+        """Name of the project"""
         return self._name
 
     @property
     def owner(self):
+        """Owner of the project"""
         return self._owner
 
     @property
     def description(self):
+        """Description of the project"""
         return self._description
 
     @property
     def created(self):
+        """Timestamp when the project was created"""
         return self._created
 
     def get_jobs_api(self):

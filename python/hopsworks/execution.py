@@ -82,54 +82,67 @@ class Execution:
 
     @property
     def id(self):
+        """Id of the execution"""
         return self._id
 
     @property
     def job_name(self):
+        """Name of the job the execution belongs to"""
         return self._job_name
 
     @property
     def state(self):
+        """Current state of the execution."""
         return self._state
 
     @property
     def final_status(self):
+        """Final status of the execution. Can be UNDEFINED, SUCCEEDED, FAILED or KILLED."""
         return self._final_status
 
     @property
     def submission_time(self):
+        """Timestamp when the execution was submitted"""
         return self._submission_time
 
     @property
     def stdout_path(self):
+        """Path in Hopsworks Filesystem to stdout log file"""
         return self._stdout_path
 
     @property
     def stderr_path(self):
+        """Path in Hopsworks Filesystem to stderr log file"""
         return self._stderr_path
 
     @property
     def app_id(self):
+        """Application id for the execution"""
         return self._app_id
 
     @property
     def hdfs_user(self):
+        """Filesystem user for the execution."""
         return self._hdfs_user
 
     @property
     def args(self):
+        """Arguments set for the execution."""
         return self._args
 
     @property
     def progress(self):
+        """Progress of the execution."""
         return self._progress
 
     @property
     def user(self):
+        """User that submitted the execution."""
         return self._user
 
     @property
     def duration(self):
+        """Duration in milliseconds the execution ran."""
         return self._duration
 
     def success(self):

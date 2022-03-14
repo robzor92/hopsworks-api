@@ -72,36 +72,37 @@ class Job:
 
     @property
     def id(self):
-        """Id of the job."""
+        """Id of the job"""
         return self._id
 
     @property
     def name(self):
-        """Name of the job."""
+        """Name of the job"""
         return self._name
 
     @property
     def creation_time(self):
-        """Date of creation for the job."""
+        """Date of creation for the job"""
         return self._creation_time
 
     @property
     def config(self):
-        """Configuration for the job."""
+        """Configuration for the job"""
         return self._config
 
     @config.setter
     def config(self, config: dict):
+        """Update configuration for the job"""
         self._config = config
 
     @property
     def job_type(self):
-        """Type of the job."""
+        """Type of the job"""
         return self._job_type
 
     @property
     def creator(self):
-        """Creator of the job."""
+        """Creator of the job"""
         return self._creator
 
     def run(self, args: str = None, await_termination: bool = None):

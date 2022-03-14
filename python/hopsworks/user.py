@@ -68,18 +68,22 @@ class User:
 
     @property
     def username(self):
+        """Username of the user"""
         return self._username
 
     @property
     def email(self):
+        """Email of the user"""
         return self._email
 
     @property
     def first_name(self):
+        """First name of the user"""
         return self._first_name
 
     @property
     def last_name(self):
+        """Last name of the user"""
         return self._last_name
 
     def json(self):

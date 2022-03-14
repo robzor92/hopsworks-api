@@ -47,7 +47,6 @@ class GitOpExecution:
         self._git_command_configuration = git_command_configuration
         self._state = state
         self._command_result_message = command_result_message
-        self._config_secret = config_secret
         self._repository = git_repo.GitRepo.from_response_json(
             repository, project_id, project_name
         )
@@ -59,39 +58,43 @@ class GitOpExecution:
 
     @property
     def id(self):
+        """Id of the execution"""
         return self._id
 
     @property
     def submission_time(self):
+        """Timestamp when the execution was submitted"""
         return self._submission_time
 
     @property
     def execution_start(self):
+        """Timestamp when the execution started"""
         return self._execution_start
 
     @property
     def execution_stop(self):
+        """Timestamp when the execution stopped"""
         return self._execution_stop
 
     @property
     def user(self):
+        """User that issued the execution"""
         return self._user
 
     @property
     def git_command_configuration(self):
+        """Configuration for the git command"""
         return self._git_command_configuration
 
     @property
     def state(self):
+        """State of the git execution"""
         return self._state
 
     @property
     def command_result_message(self):
+        """Results message from the execution"""
         return self._command_result_message
-
-    @property
-    def config_secret(self):
-        return self._config_secret
 
     @property
     def repository(self):
