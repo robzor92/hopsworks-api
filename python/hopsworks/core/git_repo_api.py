@@ -45,6 +45,18 @@ class GitReposApi:
         )
 
     def clone(self, url: str, path: str, provider: str, branch: str = None):
+        """Clone a new Git Repo in to Hopsworks Filesystem.
+
+        # Arguments
+            url: Url to the git repository
+            path: Path in Hopsworks Filesystem to clone the repo to
+            provider: The git provider where the repo is currently hosted. Valid values are "GitHub", "GitLab" and "BitBucket".
+            branch: Optional branch to clone, defaults to configured main branch
+        # Returns
+            `GitRepo`: Git repository object
+        # Raises
+            `RestAPIError`: If unable to clone the git repository.
+        """
 
         _client = client.get_instance()
 
@@ -77,9 +89,12 @@ class GitReposApi:
         return self.get_repo(git_op.repository.name, git_op.repository.path)
 
     def get_repos(self):
-        """Get the repo.
-        :param job: metadata object of job to delete
-        :type model_instance: Job
+        """Get the existing Git repositories
+
+        # Returns
+            `List[GitRepo]`: List of git repository objects
+        # Raises
+            `RestAPIError`: If unable to get the repositories
         """
         _client = client.get_instance()
         path_params = [
@@ -95,18 +110,49 @@ class GitReposApi:
         )
 
     def get_providers(self):
-        return self._git_provider_api.get_providers()
+        """Get the configured Git providers
+
+        # Returns
+            `List[GitProvider]`: List of git provider objects
+        # Raises
+            `RestAPIError`: If unable to get the git providers
+        """
+        return self._git_provider_api._get_providers()
 
     def get_provider(self, provider: str):
-        return self._git_provider_api.get_provider(provider)
+        """Get the configured Git provider
+
+        # Arguments
+            provider: Name of git provider. Valid values are "GitHub", "GitLab" and "BitBucket".
+        # Returns
+            `GitProvider`: The git provider
+        # Raises
+            `RestAPIError`: If unable to get the git provider
+        """
+        return self._git_provider_api._get_provider(provider)
 
     def set_provider(self, provider: str, username: str, token: str):
-        self._git_provider_api.set_provider(provider, username, token)
+        """Configure a Git provider
+
+        # Arguments
+            provider: Name of git provider. Valid values are "GitHub", "GitLab" and "BitBucket".
+            username: Username for the git provider service
+            token: Token to set for the git provider service
+        # Raises
+            `RestAPIError`: If unable to configure the git provider
+        """
+        self._git_provider_api._set_provider(provider, username, token)
 
     def get_repo(self, name: str, path: str = None):
-        """Get the repo.
-        :param job: metadata object of job to delete
-        :type model_instance: Job
+        """Get the cloned Git repository
+
+        # Arguments
+            name: Name of git repository
+            path: Optional path to specify if multiple git repos with the same name exists in the project
+        # Returns
+            `GitRepo`: The git repository
+        # Raises
+            `RestAPIError`: If unable to get the git repository
         """
         _client = client.get_instance()
         path_params = [

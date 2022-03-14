@@ -132,7 +132,7 @@ class Job:
         # Returns
             `Execution`. The execution object for the submitted run.
         """
-        execution = self._execution_api.start(self, args=args)
+        execution = self._execution_api._start(self, args=args)
         if await_termination:
             return self._execution_engine.wait_until_finished(self, execution)
         else:
@@ -145,7 +145,7 @@ class Job:
         # Raises
             `RestAPIError` in case the backend fails to retrieve executions.
         """
-        return self._execution_api.get_all(self)
+        return self._execution_api._get_all(self)
 
     def save(self):
         """Save the job.

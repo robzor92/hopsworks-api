@@ -25,10 +25,7 @@ class GitRemoteApi:
         self._project_name = project_name
 
     def _get(self, repo_id, name: str):
-        """Get the job.
-        :param job: metadata object of job to delete
-        :type model_instance: Job
-        """
+
         _client = client.get_instance()
         path_params = [
             "project",
@@ -49,10 +46,7 @@ class GitRemoteApi:
         return remote
 
     def _get_remotes(self, repo_id):
-        """Get the job.
-        :param job: metadata object of job to delete
-        :type model_instance: Job
-        """
+
         _client = client.get_instance()
         path_params = [
             "project",

@@ -27,7 +27,15 @@ class ExecutionEngine:
         self._execution_api = execution_api.ExecutionsApi(project_id)
         self._log = logging.getLogger(__name__)
 
+
     def download_logs(self, execution):
+        """Download execution logs to current directory
+        :param execution: execution to download logs for
+        :type execution: Execution
+        :return: downloaded stdout and stderr log path
+        :rtype: str, str
+        """
+
         job_logs_dir = "logs-job-{}-exec-{}_{}".format(
             execution.job_name, str(execution.id), str(uuid.uuid4())[:16]
         )
@@ -54,6 +62,14 @@ class ExecutionEngine:
         return out_path, err_path
 
     def wait_until_finished(self, job, execution):
+        """Wait until execution reaches terminal state
+        :param execution: job of the execution
+        :type execution: Job
+        :param execution: execution to monitor
+        :type execution: Execution
+        :return: The final Execution object
+        :rtype: str, str
+        """
 
         is_yarn_job = (
             job.job_type.lower() == "spark"

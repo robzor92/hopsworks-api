@@ -30,7 +30,16 @@ class JobsApi:
         self._project_name = project_name
 
     def create_job(self, name: str, config: dict):
+        """Create a new job.
 
+        # Arguments
+            name: Name of the job.
+            config: Configuration of the job.
+        # Returns
+            `Job`: The Job object
+        # Raises
+            `RestAPIError`: If unable to create the job
+        """
         _client = client.get_instance()
 
         if self.exists(name):
@@ -50,9 +59,14 @@ class JobsApi:
         )
 
     def get_job(self, name: str):
-        """Get the job.
-        :param job: metadata object of job to delete
-        :type model_instance: Job
+        """Get a job.
+
+        # Arguments
+            name: Name of the job.
+        # Returns
+            `Job`: The Job object
+        # Raises
+            `RestAPIError`: If unable to get the job
         """
         _client = client.get_instance()
         path_params = [
@@ -69,6 +83,15 @@ class JobsApi:
         )
 
     def exists(self, name: str):
+        """Check if a job exists.
+
+        # Arguments
+            name: Name of the job.
+        # Returns
+            `bool`: True if the job exists, otherwise False
+        # Raises
+            `RestAPIError`: If unable to check the existence of the job
+        """
         try:
             self.get_job(name)
             return True
@@ -76,6 +99,15 @@ class JobsApi:
             return False
 
     def get_configuration(self, type: str):
+        """Get configuration for the specific job type.
+
+        # Arguments
+            type: Type of the job. Currently, supported types include: SPARK, PYSPARK, PYTHON, DOCKER, FLINK.
+        # Returns
+            `dict`: Default job configuration
+        # Raises
+            `RestAPIError`: If unable to get the job configuration
+        """
         _client = client.get_instance()
         path_params = [
             "project",
@@ -91,7 +123,7 @@ class JobsApi:
     def _delete(self, job):
         """Delete the job and all executions.
         :param job: metadata object of job to delete
-        :type model_instance: Job
+        :type job: Job
         """
         _client = client.get_instance()
         path_params = [
@@ -103,7 +135,14 @@ class JobsApi:
         _client._send_request("DELETE", path_params)
 
     def _update_job(self, name: str, config: dict):
-
+        """Update the job.
+        :param name: name of the job
+        :type name: str
+        :param config: new job configuration
+        :type config: dict
+        :return: The updated Job object
+        :rtype: Job
+        """
         _client = client.get_instance()
 
         config = util.validate_job_conf(config, self._project_name)

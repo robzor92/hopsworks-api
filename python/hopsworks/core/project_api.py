@@ -20,12 +20,16 @@ from hopsworks.client.exceptions import RestAPIError
 
 
 class ProjectApi:
+
     def exists(self, name: str):
-        """Check if a given project exists.
-        :param name: name of the project
-        :type name: str
-        :return: True if project exists, otherwise False
-        :rtype: bool
+        """Check if a project exists.
+
+        # Arguments
+            name: Name of the project.
+        # Returns
+            `bool`: True if project exists, otherwise False
+        # Raises
+            `RestAPIError`: If unable to check the existence of the project
         """
         try:
             self.get_project(name)
@@ -34,11 +38,14 @@ class ProjectApi:
             return False
 
     def get_project(self, name: str):
-        """Get an existing project.
-        :param name: name of the project
-        :type name: str
-        :return: Project object
-        :rtype: Project
+        """Get a project.
+
+        # Arguments
+            name: Name of the project.
+        # Returns
+            `Project`: The Project object
+        # Raises
+            `RestAPIError`: If unable to get the project
         """
         _client = client.get_instance()
         path_params = [
@@ -52,12 +59,14 @@ class ProjectApi:
 
     def create_project(self, name: str, description: str = None):
         """Create a new project.
-        :param name: name of the project
-        :type name: str
-        :param description: optional description of the project
-        :type description: str
-        :return: Project object
-        :rtype: Project
+
+        # Arguments
+            name: Name of the project.
+            description: Description of the project.
+        # Returns
+            `Project`: The Project object
+        # Raises
+            `RestAPIError`: If unable to create the project
         """
         _client = client.get_instance()
 

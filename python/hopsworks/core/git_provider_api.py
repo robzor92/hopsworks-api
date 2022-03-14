@@ -31,11 +31,7 @@ class GitProviderApi:
         self._project_id = project_id
         self._project_name = project_name
 
-    def get_providers(self):
-        """Get the job.
-        :param job: metadata object of job to delete
-        :type model_instance: Job
-        """
+    def _get_providers(self):
         _client = client.get_instance()
         path_params = ["users", "git", "provider"]
 
@@ -45,11 +41,7 @@ class GitProviderApi:
             self._project_name,
         )
 
-    def get_provider(self, provider: str):
-        """Get the job.
-        :param job: metadata object of job to delete
-        :type model_instance: Job
-        """
+    def _get_provider(self, provider: str):
         _client = client.get_instance()
         path_params = ["users", "git", "provider"]
 
@@ -63,7 +55,7 @@ class GitProviderApi:
                 return p
         raise GitException("No git provider configured for {}".format(provider))
 
-    def set_provider(self, provider: str, username: str, token: str):
+    def _set_provider(self, provider: str, username: str, token: str):
         _client = client.get_instance()
         path_params = ["users", "git", "provider"]
 
@@ -83,7 +75,7 @@ class GitProviderApi:
             self._project_name,
         )
 
-    def delete_provider(self, provider: str):
+    def _delete_provider(self, provider: str):
         _client = client.get_instance()
         path_params = ["users", "secrets", "{}_token".format(provider.lower())]
         _client._send_request("DELETE", path_params)

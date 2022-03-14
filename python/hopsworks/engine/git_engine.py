@@ -32,12 +32,20 @@ class GitEngine:
         self._log = logging.getLogger(__name__)
 
     def execute_op_blocking(self, git_op, command):
+        """Poll a git execution status until it reaches a terminal state
+        :param git_op: git execution to monitor
+        :type git_op: GitOpExecution
+        :param command: git operation running
+        :type command: str
+        :return: The final GitOpExecution object
+        :rtype: GitOpExecution
+        """
 
         while git_op.success is None:
             self._log.info(
                 "Running command {}, current status {}".format(command, git_op.state)
             )
-            git_op = self._git_op_execution_api.get_execution(
+            git_op = self._git_op_execution_api._get_execution(
                 git_op.repository.id, git_op.id
             )
             time.sleep(5)

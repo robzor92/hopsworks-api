@@ -98,10 +98,16 @@ class GitOpExecution:
 
     @property
     def repository(self):
+        """Git repository of the execution"""
         return self._repository
 
-    @property
     def success(self):
+        """Boolean to indicate if execution ran successfully or failed
+
+        ```
+        # Returns
+            `bool`. True if execution ran successfully. False if execution failed.
+        """
         if self.state is not None and self.state.upper() in constants.GIT.ERROR_STATES:
             return False
         elif (

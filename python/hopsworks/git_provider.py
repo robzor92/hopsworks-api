@@ -70,7 +70,7 @@ class GitProvider:
         # Raises
             `RestAPIError`.
         """
-        self._git_provider_api.delete_provider(self.git_provider)
+        self._git_provider_api._delete_provider(self.git_provider)
 
     def json(self):
         return json.dumps(self, cls=util.Encoder)

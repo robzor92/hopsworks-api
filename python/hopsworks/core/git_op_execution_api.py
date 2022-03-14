@@ -26,11 +26,7 @@ class GitOpExecutionApi:
         self._project_id = project_id
         self._project_name = project_name
 
-    def get_execution(self, repo_id, execution_id):
-        """Get the job.
-        :param job: metadata object of job to delete
-        :type model_instance: Job
-        """
+    def _get_execution(self, repo_id, execution_id):
         _client = client.get_instance()
         path_params = [
             "project",

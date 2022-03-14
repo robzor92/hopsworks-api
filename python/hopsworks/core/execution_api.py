@@ -24,7 +24,7 @@ class ExecutionsApi:
     ):
         self._project_id = project_id
 
-    def start(self, job, args: str = None):
+    def _start(self, job, args: str = None):
         _client = client.get_instance()
         path_params = ["project", self._project_id, "jobs", job.name, "executions"]
 
@@ -34,7 +34,7 @@ class ExecutionsApi:
             job.name,
         )
 
-    def get(self, job, id):
+    def _get(self, job, id):
         _client = client.get_instance()
         path_params = [
             "project",
@@ -52,7 +52,7 @@ class ExecutionsApi:
             job.name,
         )
 
-    def get_all(self, job):
+    def _get_all(self, job):
         _client = client.get_instance()
         path_params = ["project", self._project_id, "jobs", job.name, "executions"]
 
@@ -67,11 +67,7 @@ class ExecutionsApi:
             job.name,
         )
 
-    def delete(self, job, id):
-        """Delete the execution..
-        :param job: metadata object of execution to delete
-        :type model_instance: Execution
-        """
+    def _delete(self, job, id):
         _client = client.get_instance()
         path_params = [
             "project",
