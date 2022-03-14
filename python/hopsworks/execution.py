@@ -145,6 +145,7 @@ class Execution:
         """Duration in milliseconds the execution ran."""
         return self._duration
 
+    @property
     def success(self):
         """Boolean to indicate if execution ran successfully or failed
 

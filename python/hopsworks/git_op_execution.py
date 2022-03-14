@@ -101,6 +101,7 @@ class GitOpExecution:
         """Git repository of the execution"""
         return self._repository
 
+    @property
     def success(self):
         """Boolean to indicate if execution ran successfully or failed
 

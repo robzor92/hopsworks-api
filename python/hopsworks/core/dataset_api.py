@@ -34,26 +34,16 @@ class DatasetApi:
     DEFAULT_FLOW_CHUNK_SIZE = 1048576
 
     def download(self, path: str, local_path: str = None, overwrite: bool = False):
-        """Download a file from the Hopsworks filesystem.
-
-        ```python
-
-        dataset_api = project.get_dataset_api()
-
-        dataset_api.download("Resources/myfile.txt")
-
-        ```
-
-        :param path: path in Hopsworks filesystem
-        :type path: str
-        :param local_path: path where to download the file in the local filesystem
-        :type local_path: str
-        :param overwrite: overwrite file if exists
-        :type overwrite: bool
-        :return: absolute path to downloaded file on local filesystem
-        :rtype: str
-        """
-
+        """Download file from Hopsworks Filesystem to the current working directory.
+         # Arguments
+             path: path in Hopsworks filesystem to the file
+             local_path: path where to download the file in the local filesystem
+             overwrite: overwrite local file if exists
+         # Returns
+             `str`: Path to downloaded file
+         # Raises
+             `RestAPIError`: If unable to download the file
+         """
         _client = client.get_instance()
         path_params = [
             "project",
@@ -112,25 +102,15 @@ class DatasetApi:
 
     def upload(self, local_path: str, upload_path: str, overwrite: bool = False):
         """Upload a file to the Hopsworks filesystem.
-
-        ```python
-
-        dataset_api = project.get_dataset_api()
-
-        dataset_api.upload("myfile.txt", "Resources")
-
-        ```
-
-        :param local_path: local path to file
-        :type local_path: str
-        :param upload_path: path to directory where to upload the file
-        :type upload_path: str
-        :param overwrite: overwrite file if exists
-        :type overwrite: bool
-        :return: path to uploaded file on Hopsworks filesystem
-        :rtype: str
-        """
-
+         # Arguments
+             local_path: local path to file to upload
+             upload_path: path to directory where to upload the file in Hopsworks Filesystem
+             overwrite: overwrite file if exists
+         # Returns
+             `str`: Path to uploaded file
+         # Raises
+             `RestAPIError`: If unable to upload the file
+         """
         # local path could be absolute or relative,
         if not os.path.isabs(local_path) and os.path.exists(
             os.path.join(os.getcwd(), local_path)
@@ -216,21 +196,14 @@ class DatasetApi:
         return _client._send_request("GET", path_params, headers=headers)
 
     def exists(self, path: str):
-        """Check if a path exists in datasets.
-
-        ```python
-
-        dataset_api = project.get_dataset_api()
-
-        dataset_api.exists("Resources/myfile.txt")
-
-        ```
-
-        :param path: path to check
-        :type path: str
-        :return: boolean whether path exists
-        :rtype: bool
-        """
+        """Check if a file exists in the Hopsworks Filesystem.
+         # Arguments
+             path: path to check
+         # Returns
+             `bool`: True if exists, otherwise False
+         # Raises
+             `RestAPIError`: If unable to check existence for the path
+         """
         try:
             self._get(path)
             return True
@@ -238,19 +211,12 @@ class DatasetApi:
             return False
 
     def remove(self, path: str):
-        """Remove a path in datasets.
-
-        ```python
-
-        dataset_api = project.get_dataset_api()
-
-        dataset_api.remove("Resources/myfile.txt")
-
-        ```
-
-        :param path: path to remove
-        :type path: str
-        """
+        """Remove a path in the Hopsworks Filesystem.
+         # Arguments
+             path: path to remove
+         # Raises
+             `RestAPIError`: If unable to remove the path
+         """
         _client = client.get_instance()
         path_params = ["project", self._project_id, "dataset", path]
-        return _client._send_request("DELETE", path_params)
+        _client._send_request("DELETE", path_params)

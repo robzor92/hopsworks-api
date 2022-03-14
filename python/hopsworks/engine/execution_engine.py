@@ -77,10 +77,10 @@ class ExecutionEngine:
             or job.job_type.lower() == "flink"
         )
 
-        updated_execution = self._execution_api.get(job, execution.id)
+        updated_execution = self._execution_api._get(job, execution.id)
         execution_state = None
         while updated_execution.success is None:
-            updated_execution = self._execution_api.get(job, execution.id)
+            updated_execution = self._execution_api._get(job, execution.id)
             if execution_state != updated_execution.state:
                 if is_yarn_job:
                     self._log.info(
@@ -102,7 +102,7 @@ class ExecutionEngine:
         log_aggregation_files_exist = False
         self._log.info("Waiting for log aggregation to finish.")
         while not log_aggregation_files_exist and await_time >= 0:
-            updated_execution = self._execution_api.get(job, execution.id)
+            updated_execution = self._execution_api._get(job, execution.id)
             log_aggregation_files_exist = self._dataset_api.exists(
                 updated_execution.stdout_path
             ) and self._dataset_api.exists(updated_execution.stderr_path)
