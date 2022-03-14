@@ -6,19 +6,19 @@
     alt="Hopsworks Community"
   /></a>
     <a href="https://docs.hopsworks.ai"><img
-    src="https://img.shields.io/badge/docs-HSFS-orange"
+    src="https://img.shields.io/badge/docs-HOPSWORKS-orange"
     alt="Hopsworks Feature Store Documentation"
   /></a>
-  <a href="https://pypi.org/project/hsfs/"><img
-    src="https://img.shields.io/pypi/v/hsfs?color=blue"
+  <a href="https://pypi.org/project/hopsworks/"><img
+    src="https://img.shields.io/pypi/v/hopsworks?color=blue"
     alt="PyPiStatus"
   /></a>
-  <a href="https://archiva.hops.works/#artifact/com.logicalclocks/hsfs"><img
-    src="https://img.shields.io/badge/java-HSFS-green"
+  <a href="https://archiva.hops.works/#artifact/com.logicalclocks/hopsworks"><img
+    src="https://img.shields.io/badge/java-HOPSWORKS-green"
     alt="Scala/Java Artifacts"
   /></a>
-  <a href="https://pepy.tech/project/hsfs/month"><img
-    src="https://pepy.tech/badge/hsfs/month"
+  <a href="https://pepy.tech/project/hopsworks/month"><img
+    src="https://pepy.tech/badge/hopsworks/month"
     alt="Downloads"
   /></a>
   <a href="https://github.com/psf/black"><img
@@ -26,7 +26,7 @@
     alt="CodeStyle"
   /></a>
   <a><img
-    src="https://img.shields.io/pypi/l/hsfs?color=green"
+    src="https://img.shields.io/pypi/l/hopsworks?color=green"
     alt="License"
   /></a>
 </p>
@@ -44,15 +44,26 @@ import hopsworks
 
 connection = hopsworks.connection()
 
-project_api = connection.get_project_api()
+project = connection.get_project("my_project")
 
-project = project_api.get_project("demo")
+
 ```
 
 Create a new project
 ```python
-project = project_api.create_project("demo")
+project = connection.create_project("my_project")
 ```
+
+Upload data to a project
+```python
+dataset_api = project.get_dataset_api()
+
+dataset_api.upload("data.csv", "Resources")
+```
+
+
+
+
 
 You can find more examples on how to use the library in our [hops-examples](https://github.com/logicalclocks/hops-examples) repository.
 
