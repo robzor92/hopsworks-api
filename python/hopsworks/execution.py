@@ -42,6 +42,7 @@ class Execution:
         type=None,
         href=None,
         project_id=None,
+        job_name=None,
     ):
         self._id = id
         self._final_status = final_status
@@ -56,20 +57,21 @@ class Execution:
         self._monitoring = monitoring
         self._app_id = app_id
         self._hdfs_user = hdfs_user
+        self._job_name = job_name
 
         self._execution_engine = execution_engine.ExecutionEngine(project_id)
         self._execution_api = execution_api.ExecutionsApi(project_id)
 
     @classmethod
-    def from_response_json(cls, json_dict, project_id):
+    def from_response_json(cls, json_dict, project_id, job_name):
         json_decamelized = humps.decamelize(json_dict)
         if "count" not in json_decamelized:
-            return cls(**json_decamelized, project_id=project_id)
+            return cls(**json_decamelized, project_id=project_id, job_name=job_name)
         elif json_decamelized["count"] == 0:
             return []
         else:
             return [
-                cls(**execution, project_id=project_id)
+                cls(**execution, project_id=project_id, job_name=job_name)
                 for execution in json_decamelized["items"]
             ]
 
@@ -81,6 +83,10 @@ class Execution:
     @property
     def id(self):
         return self._id
+
+    @property
+    def job_name(self):
+        return self._job_name
 
     @property
     def state(self):
@@ -132,10 +138,7 @@ class Execution:
 
     @property
     def success(self):
-        if (
-            self.final_status in constants.JOBS.ERROR_STATES
-            or self.state in constants.JOBS.ERROR_STATES
-        ):
+        if self.state in constants.JOBS.ERROR_STATES:
             return False
         elif self.state in constants.JOBS.SUCCESS_STATES:
             return True

@@ -16,10 +16,9 @@
 
 from hopsworks.core import dataset_api, execution_api
 import os
-import uuid
-import time
 import logging
-
+import time
+import uuid
 
 class ExecutionEngine:
     def __init__(self, project_id=None):
@@ -28,8 +27,11 @@ class ExecutionEngine:
         self._log = logging.getLogger(__name__)
 
     def download_logs(self, execution):
-        download_log_dir = os.path.join(os.getcwd(), str(uuid.uuid4()))
-        os.mkdir(download_log_dir)
+        job_logs_dir = "logs-job-{}-exec-{}_{}".format(execution.job_name, str(execution.id), str(uuid.uuid4())[:16])
+        download_log_dir = os.path.join(os.getcwd(), job_logs_dir)
+
+        if not os.path.exists(download_log_dir):
+            os.mkdir(download_log_dir)
 
         out_path = None
         if execution.stdout_path is not None and self._dataset_api.exists(
@@ -46,7 +48,7 @@ class ExecutionEngine:
             err_path = self._dataset_api.download(
                 execution.stderr_path, download_log_dir
             )
-
+            
         return out_path, err_path
 
     def wait_until_finished(self, job, execution):
@@ -77,36 +79,31 @@ class ExecutionEngine:
             execution_state = updated_execution.state
             time.sleep(3)
 
-        # wait for log files to be aggregated, max 1 minute
-        await_time = 20
-        log_aggregation_complete = False
+        # wait for log files to be aggregated, max 2 minute
+        await_time = 40
+        log_aggregation_files_exist = False
         self._log.info("Waiting for log aggregation to finish.")
-        while not log_aggregation_complete and await_time >= 0:
+        while not log_aggregation_files_exist and await_time >= 0:
             updated_execution = self._execution_api.get(job, execution.id)
-            log_aggregation_complete = self._dataset_api.exists(
+            log_aggregation_files_exist = self._dataset_api.exists(
                 updated_execution.stdout_path
             ) and self._dataset_api.exists(updated_execution.stderr_path)
             await_time -= 1
             time.sleep(3)
 
-        if updated_execution is not None:
-            execution._final_status = updated_execution.final_status
-            execution._state = updated_execution.state
-            execution._stdout_path = updated_execution.stdout_path
-            execution._stderr_path = updated_execution.stderr_path
-
-        if is_yarn_job and not execution.success:
+        if is_yarn_job and not updated_execution.success:
             self._log.error(
                 "Execution failed with status: {}. See the logs for more information.".format(
-                    execution.final_status
+                    updated_execution.final_status
                 )
             )
-        elif not is_yarn_job and not execution.success:
+        elif not is_yarn_job and not updated_execution.success:
             self._log.error(
                 "Execution failed with status: {}. See the logs for more information.".format(
-                    execution.state
+                    updated_execution.state
                 )
             )
         else:
             self._log.info("Execution finished successfully.")
-            return execution
+
+        return updated_execution
