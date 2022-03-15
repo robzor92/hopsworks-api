@@ -33,12 +33,11 @@ class Client(base.Client):
         self,
         host,
         port,
-        engine,
+        project,
         region_name,
         secrets_store,
         hostname_verification,
         trust_store_path,
-        cert_folder,
         api_key_file,
         api_key_value,
     ):
@@ -49,6 +48,7 @@ class Client(base.Client):
         self._host = host
         self._port = port
         self._base_url = "https://" + self._host + ":" + str(self._port)
+        self._project_name = project
         self._region_name = region_name or self.DEFAULT_REGION
 
         if api_key_value is not None:
@@ -60,6 +60,12 @@ class Client(base.Client):
         self._session = requests.session()
         self._connected = True
         self._verify = self._get_verify(self._host, trust_store_path)
+
+        if self._project_name is not None:
+            project_info = self._get_project_info(self._project_name)
+            self._project_id = str(project_info["projectId"])
+        else:
+            self._project_id = None
 
         self._cert_key = None
         self._cert_folder_base = None

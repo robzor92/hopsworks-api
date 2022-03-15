@@ -59,6 +59,8 @@ class Client(base.Client):
             if self.REQUESTS_VERIFY in os.environ
             else "true"
         )
+        self._project_id = os.environ[self.PROJECT_ID]
+        self._project_name = self._project_name()
         try:
             self._auth = auth.BearerAuth(self._read_jwt())
         except FileNotFoundError:
@@ -166,6 +168,19 @@ class Client(base.Client):
             username = os.environ[self.HADOOP_USER_NAME]
             material_directory = Path(os.environ[self.MATERIAL_DIRECTORY])
             return str(material_directory.joinpath(username + self.KEYSTORE_SUFFIX))
+
+    def _project_name(self):
+        try:
+            return os.environ[self.PROJECT_NAME]
+        except KeyError:
+            pass
+
+        hops_user = self._project_user()
+        hops_user_split = hops_user.split(
+            "__"
+        )  # project users have username project__user
+        project = hops_user_split[0]
+        return project
 
     def _project_user(self):
         try:

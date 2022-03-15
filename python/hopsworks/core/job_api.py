@@ -82,6 +82,27 @@ class JobsApi:
             self._project_name,
         )
 
+    def get_jobs(self):
+        """Get all jobs.
+
+        # Returns
+            `List[Job]`: List of Job objects
+        # Raises
+            `RestAPIError`: If unable to get the jobs
+        """
+        _client = client.get_instance()
+        path_params = [
+            "project",
+            self._project_id,
+            "jobs",
+        ]
+        query_params = {"expand": ["creator"]}
+        return job.Job.from_response_json(
+            _client._send_request("GET", path_params, query_params=query_params),
+            self._project_id,
+            self._project_name,
+        )
+
     def exists(self, name: str):
         """Check if a job exists.
 
