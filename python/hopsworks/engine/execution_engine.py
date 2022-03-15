@@ -27,7 +27,6 @@ class ExecutionEngine:
         self._execution_api = execution_api.ExecutionsApi(project_id)
         self._log = logging.getLogger(__name__)
 
-
     def download_logs(self, execution):
         """Download execution logs to current directory
         :param execution: execution to download logs for

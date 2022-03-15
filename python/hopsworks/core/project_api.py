@@ -20,8 +20,7 @@ from hopsworks.client.exceptions import RestAPIError
 
 
 class ProjectApi:
-
-    def exists(self, name: str):
+    def _exists(self, name: str):
         """Check if a project exists.
 
         # Arguments
@@ -32,12 +31,12 @@ class ProjectApi:
             `RestAPIError`: If unable to check the existence of the project
         """
         try:
-            self.get_project(name)
+            self._get_project(name)
             return True
         except RestAPIError:
             return False
 
-    def get_project(self, name: str):
+    def _get_project(self, name: str):
         """Get a project.
 
         # Arguments
@@ -50,14 +49,13 @@ class ProjectApi:
         _client = client.get_instance()
         path_params = [
             "project",
-            "asShared",
             "getProjectInfo",
             name,
         ]
         project_json = _client._send_request("GET", path_params)
         return project.Project.from_response_json(project_json)
 
-    def create_project(self, name: str, description: str = None):
+    def _create_project(self, name: str, description: str = None):
         """Create a new project.
 
         # Arguments
@@ -88,4 +86,4 @@ class ProjectApi:
         )
 
         # The return of the project creation is not a ProjectDTO, so get the correct object after creation
-        return self.get_project(name)
+        return self._get_project(name)

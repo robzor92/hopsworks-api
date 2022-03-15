@@ -33,7 +33,6 @@ class Client(ABC):
     TOKEN_FILE = "token.jwt"
     APIKEY_FILE = "api.key"
     REST_ENDPOINT = "REST_ENDPOINT"
-    DEFAULT_DATABRICKS_ROOT_VIRTUALENV_ENV = "DEFAULT_DATABRICKS_ROOT_VIRTUALENV_ENV"
 
     @abstractmethod
     def __init__(self):

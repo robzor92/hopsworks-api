@@ -49,14 +49,14 @@ class GitFileStatus:
     @property
     def status(self):
         """Status of the file
-        	Unmodified         StatusCode = ' '
-	        Untracked          StatusCode = '?'
-	        Modified           StatusCode = 'M'
-	        Added              StatusCode = 'A'
-	        Deleted            StatusCode = 'D'
-	        Renamed            StatusCode = 'R'
-	        Copied             StatusCode = 'C'
-	        UpdatedButUnmerged StatusCode = 'U'"""
+        Unmodified         StatusCode = ' '
+        Untracked          StatusCode = '?'
+        Modified           StatusCode = 'M'
+        Added              StatusCode = 'A'
+        Deleted            StatusCode = 'D'
+        Renamed            StatusCode = 'R'
+        Copied             StatusCode = 'C'
+        UpdatedButUnmerged StatusCode = 'U'"""
         return self._status
 
     @property

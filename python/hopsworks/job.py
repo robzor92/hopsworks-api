@@ -54,18 +54,22 @@ class Job:
 
     @classmethod
     def from_response_json(cls, json_dict, project_id, project_name):
-        # Job config should not be decamelized
-        config = json_dict.pop("config")
-        json_decamelized = humps.decamelize(json_dict)
-        json_decamelized["config"] = config
-        if "count" in json_decamelized:
-            if json_decamelized["count"] == 0:
+        if "count" in json_dict:
+            if json_dict["count"] == 0:
                 return []
-            return [
-                cls(**job, project_id=project_id, project_name=project_name)
-                for job in json_decamelized["items"]
-            ]
+            jobs = []
+            for job in json_dict["items"]:
+                # Job config should not be decamelized when updated
+                config = job.pop("config")
+                json_decamelized = humps.decamelize(job)
+                json_decamelized["config"] = config
+                jobs.append(cls(**json_decamelized, project_id=project_id, project_name=project_name))
+            return jobs
         else:
+            # Job config should not be decamelized when updated
+            config = json_dict.pop("config")
+            json_decamelized = humps.decamelize(json_dict)
+            json_decamelized["config"] = config
             return cls(
                 **json_decamelized, project_id=project_id, project_name=project_name
             )

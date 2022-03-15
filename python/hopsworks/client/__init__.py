@@ -23,12 +23,11 @@ def init(
     client_type,
     host=None,
     port=None,
-    engine=None,
+    project=None,
     region_name=None,
     secrets_store=None,
     hostname_verification=None,
     trust_store_path=None,
-    cert_folder=None,
     api_key_file=None,
     api_key_value=None,
 ):
@@ -40,12 +39,11 @@ def init(
             _client = external.Client(
                 host,
                 port,
-                engine,
+                project,
                 region_name,
                 secrets_store,
                 hostname_verification,
                 trust_store_path,
-                cert_folder,
                 api_key_file,
                 api_key_value,
             )

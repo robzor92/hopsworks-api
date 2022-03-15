@@ -18,6 +18,7 @@ import math
 import os
 from tqdm.auto import tqdm
 import shutil
+import logging
 
 from hopsworks import client
 from hopsworks.client.exceptions import RestAPIError
@@ -30,20 +31,21 @@ class DatasetApi:
         project_id,
     ):
         self._project_id = project_id
+        self._log = logging.getLogger(__name__)
 
     DEFAULT_FLOW_CHUNK_SIZE = 1048576
 
     def download(self, path: str, local_path: str = None, overwrite: bool = False):
         """Download file from Hopsworks Filesystem to the current working directory.
-         # Arguments
-             path: path in Hopsworks filesystem to the file
-             local_path: path where to download the file in the local filesystem
-             overwrite: overwrite local file if exists
-         # Returns
-             `str`: Path to downloaded file
-         # Raises
-             `RestAPIError`: If unable to download the file
-         """
+        # Arguments
+            path: path in Hopsworks filesystem to the file
+            local_path: path where to download the file in the local filesystem
+            overwrite: overwrite local file if exists
+        # Returns
+            `str`: Path to downloaded file
+        # Raises
+            `RestAPIError`: If unable to download the file
+        """
         _client = client.get_instance()
         path_params = [
             "project",
@@ -86,31 +88,43 @@ class DatasetApi:
             "GET", path_params, query_params=query_params, stream=True
         ) as response:
             with open(local_path, "wb") as f:
-                pbar = tqdm(
-                    total=file_size,
-                    bar_format="{desc}: {percentage:.3f}%|{bar}| {n_fmt}/{total_fmt} elapsed<{elapsed} remaining<{remaining}",
-                    desc="Downloading",
-                )
+                pbar=None
+                try:
+                    pbar = tqdm(
+                        total=file_size,
+                        bar_format="{desc}: {percentage:.3f}%|{bar}| {n_fmt}/{total_fmt} elapsed<{elapsed} remaining<{remaining}",
+                        desc="Downloading",
+                    )
+                except Exception:
+                    self._log.exception("Failed to initialize progress bar.")
+                    self._log.info("Starting download")
+
                 for chunk in response.iter_content(
                     chunk_size=self.DEFAULT_FLOW_CHUNK_SIZE
                 ):
                     f.write(chunk)
-                    pbar.update(len(chunk))
 
-                pbar.close()
+                    if pbar is not None:
+                        pbar.update(len(chunk))
+
+                if pbar is not None:
+                    pbar.close()
+                else:
+                    self._log.info("Download finished")
+
         return local_path
 
     def upload(self, local_path: str, upload_path: str, overwrite: bool = False):
         """Upload a file to the Hopsworks filesystem.
-         # Arguments
-             local_path: local path to file to upload
-             upload_path: path to directory where to upload the file in Hopsworks Filesystem
-             overwrite: overwrite file if exists
-         # Returns
-             `str`: Path to uploaded file
-         # Raises
-             `RestAPIError`: If unable to upload the file
-         """
+        # Arguments
+            local_path: local path to file to upload
+            upload_path: path to directory where to upload the file in Hopsworks Filesystem
+            overwrite: overwrite file if exists
+        # Returns
+            `str`: Path to uploaded file
+        # Raises
+            `RestAPIError`: If unable to upload the file
+        """
         # local path could be absolute or relative,
         if not os.path.isabs(local_path) and os.path.exists(
             os.path.join(os.getcwd(), local_path)
@@ -139,11 +153,17 @@ class DatasetApi:
 
         chunk_number = 1
         with open(local_path, "rb") as f:
-            pbar = tqdm(
-                total=file_size,
-                bar_format="{desc}: {percentage:.3f}%|{bar}| {n_fmt}/{total_fmt} elapsed<{elapsed} remaining<{remaining}",
-                desc="Uploading",
-            )
+            pbar=None
+            try:
+                pbar = tqdm(
+                    total=file_size,
+                    bar_format="{desc}: {percentage:.3f}%|{bar}| {n_fmt}/{total_fmt} elapsed<{elapsed} remaining<{remaining}",
+                    desc="Uploading",
+                )
+            except Exception:
+                self._log.exception("Failed to initialize progress bar.")
+                self._log.info("Starting upload")
+
             while True:
                 chunk = f.read(self.DEFAULT_FLOW_CHUNK_SIZE)
                 if not chunk:
@@ -154,10 +174,15 @@ class DatasetApi:
                 query_params["flowChunkNumber"] = chunk_number
 
                 self._upload_request(query_params, upload_path, file_name, chunk)
-                pbar.update(query_params["flowCurrentChunkSize"])
                 chunk_number += 1
 
-            pbar.close()
+                if pbar is not None:
+                    pbar.update(query_params["flowCurrentChunkSize"])
+
+            if pbar is not None:
+                pbar.close()
+            else:
+                self._log.info("Upload finished")
 
         return upload_path + "/" + os.path.basename(local_path)
 
@@ -197,13 +222,13 @@ class DatasetApi:
 
     def exists(self, path: str):
         """Check if a file exists in the Hopsworks Filesystem.
-         # Arguments
-             path: path to check
-         # Returns
-             `bool`: True if exists, otherwise False
-         # Raises
-             `RestAPIError`: If unable to check existence for the path
-         """
+        # Arguments
+            path: path to check
+        # Returns
+            `bool`: True if exists, otherwise False
+        # Raises
+            `RestAPIError`: If unable to check existence for the path
+        """
         try:
             self._get(path)
             return True
@@ -212,11 +237,11 @@ class DatasetApi:
 
     def remove(self, path: str):
         """Remove a path in the Hopsworks Filesystem.
-         # Arguments
-             path: path to remove
-         # Raises
-             `RestAPIError`: If unable to remove the path
-         """
+        # Arguments
+            path: path to remove
+        # Raises
+            `RestAPIError`: If unable to remove the path
+        """
         _client = client.get_instance()
         path_params = ["project", self._project_id, "dataset", path]
         _client._send_request("DELETE", path_params)

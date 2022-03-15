@@ -26,7 +26,8 @@ AWS_DEFAULT_REGION = "default"
 HOPSWORKS_PORT_DEFAULT = 443
 SECRETS_STORE_DEFAULT = "parameterstore"
 HOSTNAME_VERIFICATION_DEFAULT = True
-CERT_FOLDER_DEFAULT = "hops"
+PROJECT_ID = "HOPSWORKS_PROJECT_ID"
+PROJECT_NAME = "HOPSWORKS_PROJECT_NAME"
 
 
 class Connection:
@@ -81,8 +82,6 @@ class Connection:
             to `True`.
         trust_store_path: Path on the file system containing the Hopsworks certificates,
             defaults to `None`.
-        cert_folder: The directory to store retrieved HopsFS certificates, defaults to
-            `"hops"`. Only required when running without a Spark environment.
         api_key_file: Path to a file containing the API Key, if provided,
             `secrets_store` will be ignored, defaults to `None`.
         api_key_value: API Key as string, if provided, `secrets_store` will be ignored`,
@@ -98,23 +97,21 @@ class Connection:
         self,
         host: str = None,
         port: int = HOPSWORKS_PORT_DEFAULT,
-        engine: str = None,
+        project: str = None,
         region_name: str = AWS_DEFAULT_REGION,
         secrets_store: str = SECRETS_STORE_DEFAULT,
         hostname_verification: bool = HOSTNAME_VERIFICATION_DEFAULT,
         trust_store_path: str = None,
-        cert_folder: str = CERT_FOLDER_DEFAULT,
         api_key_file: str = None,
         api_key_value: str = None,
     ):
         self._host = host
         self._port = port
-        self._engine = engine
+        self._project = project
         self._region_name = region_name
         self._secrets_store = secrets_store
         self._hostname_verification = hostname_verification
         self._trust_store_path = trust_store_path
-        self._cert_folder = cert_folder
         self._api_key_file = api_key_file
         self._api_key_value = api_key_value
         self._connected = False
@@ -132,10 +129,10 @@ class Connection:
         # Returns
             `Project`. A project handle object to perform operations on.
         """
-        return self._project_api.create_project(name, description)
+        return self._project_api._create_project(name, description)
 
     @connected
-    def get_project(self, name: str):
+    def get_project(self, name: str = None):
         """Get an existing project.
 
         # Arguments
@@ -144,7 +141,11 @@ class Connection:
         # Returns
             `Project`. A project handle object to perform operations on.
         """
-        return self._project_api.get_project(name)
+
+        if not name:
+            name = client.get_instance()._project_name
+
+        return self._project_api._get_project(name)
 
     @connected
     def project_exists(self, name: str):
@@ -156,7 +157,7 @@ class Connection:
         # Returns
             `bool`. True if project exists, otherwise False
         """
-        return self._project_api.exists(name)
+        return self._project_api._exists(name)
 
     @not_connected
     def connect(self):
@@ -186,12 +187,10 @@ class Connection:
                     self._host,
                     self._port,
                     self._project,
-                    self._engine,
                     self._region_name,
                     self._secrets_store,
                     self._hostname_verification,
                     self._trust_store_path,
-                    self._cert_folder,
                     self._api_key_file,
                     self._api_key_value,
                 )
@@ -221,12 +220,11 @@ class Connection:
         cls,
         host: str = None,
         port: int = HOPSWORKS_PORT_DEFAULT,
-        engine: str = None,
+        project: str = None,
         region_name: str = AWS_DEFAULT_REGION,
         secrets_store: str = SECRETS_STORE_DEFAULT,
         hostname_verification: bool = HOSTNAME_VERIFICATION_DEFAULT,
         trust_store_path: str = None,
-        cert_folder: str = CERT_FOLDER_DEFAULT,
         api_key_file: str = None,
         api_key_value: str = None,
     ):
@@ -234,12 +232,11 @@ class Connection:
         return cls(
             host,
             port,
-            engine,
+            project,
             region_name,
             secrets_store,
             hostname_verification,
             trust_store_path,
-            cert_folder,
             api_key_file,
             api_key_value,
         )
@@ -261,6 +258,15 @@ class Connection:
     @not_connected
     def port(self, port):
         self._port = port
+
+    @property
+    def project(self):
+        return self._project
+
+    @project.setter
+    @not_connected
+    def project(self, project):
+        self._project = project
 
     @property
     def region_name(self):
@@ -297,15 +303,6 @@ class Connection:
     @not_connected
     def trust_store_path(self, trust_store_path):
         self._trust_store_path = trust_store_path
-
-    @property
-    def cert_folder(self):
-        return self._cert_folder
-
-    @cert_folder.setter
-    @not_connected
-    def cert_folder(self, cert_folder):
-        self._cert_folder = cert_folder
 
     @property
     def api_key_file(self):
