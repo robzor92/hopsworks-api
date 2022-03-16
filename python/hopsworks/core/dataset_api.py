@@ -88,7 +88,7 @@ class DatasetApi:
             "GET", path_params, query_params=query_params, stream=True
         ) as response:
             with open(local_path, "wb") as f:
-                pbar=None
+                pbar = None
                 try:
                     pbar = tqdm(
                         total=file_size,
@@ -153,7 +153,7 @@ class DatasetApi:
 
         chunk_number = 1
         with open(local_path, "rb") as f:
-            pbar=None
+            pbar = None
             try:
                 pbar = tqdm(
                     total=file_size,

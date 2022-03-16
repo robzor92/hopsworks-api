@@ -63,7 +63,13 @@ class Job:
                 config = job.pop("config")
                 json_decamelized = humps.decamelize(job)
                 json_decamelized["config"] = config
-                jobs.append(cls(**json_decamelized, project_id=project_id, project_name=project_name))
+                jobs.append(
+                    cls(
+                        **json_decamelized,
+                        project_id=project_id,
+                        project_name=project_name,
+                    )
+                )
             return jobs
         else:
             # Job config should not be decamelized when updated

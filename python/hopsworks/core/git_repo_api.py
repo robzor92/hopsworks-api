@@ -29,6 +29,7 @@ from typing import List, Union
 from hopsworks.git_file_status import GitFileStatus
 
 import json
+import logging
 
 
 class GitReposApi:
@@ -43,6 +44,7 @@ class GitReposApi:
         self._git_provider_api = git_provider_api.GitProviderApi(
             project_id, project_name
         )
+        self._log = logging.getLogger(__name__)
 
     def clone(self, url: str, path: str, provider: str, branch: str = None):
         """Clone a new Git Repo in to Hopsworks Filesystem.
@@ -305,12 +307,14 @@ class GitReposApi:
 
         status_dict = json.loads(git_op.command_result_message)
         file_status = None
-        if type(status_dict["status"]) is list:
+        if status_dict is not None and type(status_dict["status"]) is list:
             file_status = []
             for status in status_dict["status"]:
                 file_status.append(
                     git_file_status.GitFileStatus.from_response_json(status)
                 )
+        else:
+            self._log.info("Nothing to commit, working tree clean")
 
         return file_status
 
