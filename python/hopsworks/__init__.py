@@ -56,6 +56,7 @@ def login(
     project: str = None,
     api_key_value: str = None,
     api_key_file: str = None,
+    create: bool = False,
 ):
     """Connect to [Serverless Hopsworks](https://app.hopsworks.ai) by calling the `hopsworks.login()` function with no arguments.
 
@@ -75,18 +76,17 @@ def login(
 
     ```
 
-    In addition to setting function arguments directly, `hopsworks.login()` also reads the environment variables:
-    HOPSWORKS_HOST, HOPSWORKS_PORT, HOPSWORKS_PROJECT and HOPSWORKS_API_KEY.
-
+    In addition to setting function arguments directly, `hopsworks.login()` also reads the optional environment variables listed in the arguments.
     The function arguments do however take precedence over the environment variables in case both are set.
 
     # Arguments
-        host: The hostname of the Hopsworks instance, defaults to `None`.
+        host: The hostname of the Hopsworks instance, defaults to `None`. Alt HOPSWORKS_HOST.
         port: The port on which the Hopsworks instance can be reached,
-            defaults to `443`.
-        project: Name of the project to access. If used inside a Hopsworks environment it always gets the current project. If not provided you will be prompted to enter it.
-        api_key_value: Value of the Api Key
+            defaults to `443`. Alt HOPSWORKS_PORT.
+        project: Name of the project to access. If used inside a Hopsworks environment it always gets the current project. If not provided you will be prompted to enter it. Alt HOPSWORKS_PROJECT.
+        api_key_value: Value of the Api Key. Alt HOPSWORKS_API_KEY.
         api_key_file: Path to file wih Api Key
+        create: If set to `True`, then create the project if it does not exist. The project will be created with the name specified in the `project` argument.
     # Returns
         `Project`: The Project object
     # Raises

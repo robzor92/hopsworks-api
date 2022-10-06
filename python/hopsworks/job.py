@@ -117,7 +117,7 @@ class Job:
         """Creator of the job"""
         return self._creator
 
-    def run(self, args: str = None, await_termination: bool = None):
+    def run(self, args: str = None, await_termination: bool = False):
         """Run the job, with the option of passing runtime arguments.
 
         Example of a blocking execution and downloading logs once execution is finished.
