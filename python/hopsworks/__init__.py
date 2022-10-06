@@ -93,6 +93,9 @@ def login(
         `RestAPIError`: If unable to connect to Hopsworks
     """
 
+    if create is True and project is None:
+        raise Exception("If create=True, then the project argument must also be set.")
+
     # If already logged in, should reset connection and follow login procedure as Connection may no longer be valid
     logout()
 
@@ -101,7 +104,10 @@ def login(
     # If inside hopsworks, just return the current project for now
     if "REST_ENDPOINT" in os.environ:
         _saas_connection = _saas_connection()
-        project_obj = _saas_connection.get_project()
+        if create is True:
+            project_obj = _saas_connection.create_project(project)
+        else:
+            project_obj = _saas_connection.get_project()
         print("\nLogged in to project, explore it here " + project_obj.get_url())
         return project_obj
 
@@ -183,13 +189,15 @@ def login(
 
     try:
         _saas_connection = _saas_connection(host=host, port=port, api_key_value=api_key)
-        project_obj = _prompt_project(_saas_connection, project)
+        if create is True:
+            project_obj = _saas_connection.create_project(project)
+        else:
+            project_obj = _prompt_project(_saas_connection, project)
+        print("\nLogged in to project, explore it here " + project_obj.get_url())
+        return project_obj
     except RestAPIError as e:
         logout()
         raise e
-
-    print("\nLogged in to project, explore it here " + project_obj.get_url())
-    return project_obj
 
 
 def _prompt_project(valid_connection, project):
