@@ -59,7 +59,7 @@ class JobsApi:
         """
         _client = client.get_instance()
 
-        if self.exists(name):
+        if self.get_job(name) is not None:
             raise JobException("A job named {} already exists".format(name))
 
         config = util.validate_job_conf(config, self._project_name)
@@ -126,22 +126,6 @@ class JobsApi:
             self._project_id,
             self._project_name,
         )
-
-    def exists(self, name: str):
-        """Check if a job exists.
-
-        # Arguments
-            name: Name of the job.
-        # Returns
-            `bool`: True if the job exists, otherwise False
-        # Raises
-            `RestAPIError`: If unable to check the existence of the job
-        """
-        try:
-            self.get_job(name)
-            return True
-        except RestAPIError:
-            return False
 
     def get_configuration(self, type: str):
         """Get configuration for the specific job type.
