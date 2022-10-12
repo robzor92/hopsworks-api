@@ -15,7 +15,7 @@
 #
 
 from hopsworks import client, kafka_topic, kafka_schema, constants
-from hopsworks.client.exceptions import KafkaException
+from hopsworks.client.exceptions import RestAPIError
 import json
 import socket
 from hopsworks.client.external import Client
@@ -154,7 +154,7 @@ class KafkaApi:
         # Arguments
             name: name of the topic
         # Returns
-            `KafkaTopic`: The KafkaTopic object
+            `KafkaTopic`: The KafkaTopic object or `None` if the topic does not exist.
         # Raises
             `RestAPIError`: If unable to get the topic
         """
@@ -164,7 +164,7 @@ class KafkaApi:
             if topic.name == name:
                 return topic
 
-        raise KafkaException("No topic named {} could be found".format(name))
+        return None
 
     def get_topics(self):
         """Get all kafka topics.
@@ -258,7 +258,9 @@ class KafkaApi:
 
         schemas = []
         for version in versions:
-            schemas.append(self._get_schema_details(subject, version))
+            schema = self._get_schema_details(subject, version)
+            if schema is not None:
+                schemas.append(schema)
 
         return schemas
 
@@ -269,7 +271,7 @@ class KafkaApi:
             subject: subject name
             version: version number
         # Returns
-            `KafkaSchema`: KafkaSchema object
+            `KafkaSchema`: KafkaSchema object or `None` if the schema does not exist.
         # Raises
             `RestAPIError`: If unable to get the schema
         """
@@ -277,12 +279,7 @@ class KafkaApi:
         for schema in schemas:
             if schema.version == version:
                 return schema
-
-        raise KafkaException(
-            "No schema for subject {} and version {} could be found".format(
-                subject, version
-            )
-        )
+        return None
 
     def _get_schema_details(self, subject: str, version: int):
         """Get the schema details.
@@ -302,11 +299,16 @@ class KafkaApi:
             str(version),
         ]
 
-        return kafka_schema.KafkaSchema.from_response_json(
-            _client._send_request("GET", path_params),
-            self._project_id,
-            self._project_name,
-        )
+        try:
+            return kafka_schema.KafkaSchema.from_response_json(
+                _client._send_request("GET", path_params),
+                self._project_id,
+                self._project_name,
+            )
+        except RestAPIError as e:
+            if e.response.status_code != 404:
+                raise e
+        return None
 
     def _get_broker_endpoints(self, externalListeners: bool = False):
         _client = client.get_instance()

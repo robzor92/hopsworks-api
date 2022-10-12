@@ -150,7 +150,7 @@ class GitApi:
         # Arguments
             provider: Name of git provider. Valid values are "GitHub", "GitLab" and "BitBucket".
         # Returns
-            `GitProvider`: The git provider
+            `GitProvider`: The GitProvider object or `None` if the provider is not configured.
         # Raises
             `RestAPIError`: If unable to get the git provider
         """
@@ -188,7 +188,7 @@ class GitApi:
             name: Name of git repository
             path: Optional path to specify if multiple git repos with the same name exists in the project
         # Returns
-            `GitRepo`: The git repository
+            `GitRepo`: The GitRepo object or `None` if the repository does not exist.
         # Raises
             `RestAPIError`: If unable to get the git repository
         """
@@ -226,7 +226,7 @@ class GitApi:
                 )
             )
         else:
-            raise GitException("No git repository found matching name {}".format(name))
+            return None
 
     def _create(self, repo_id, branch: str, checkout=False):
 

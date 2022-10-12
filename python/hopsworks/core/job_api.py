@@ -83,7 +83,7 @@ class JobsApi:
         # Arguments
             name: Name of the job.
         # Returns
-            `Job`: The Job object
+            `Job`: The Job object or `None` if the job does not exist.
         # Raises
             `RestAPIError`: If unable to get the job
         """
@@ -95,11 +95,16 @@ class JobsApi:
             name,
         ]
         query_params = {"expand": ["creator"]}
-        return job.Job.from_response_json(
-            _client._send_request("GET", path_params, query_params=query_params),
-            self._project_id,
-            self._project_name,
-        )
+        try:
+            return job.Job.from_response_json(
+                _client._send_request("GET", path_params, query_params=query_params),
+                self._project_id,
+                self._project_name,
+            )
+        except RestAPIError as e:
+            if e.response.status_code != 404:
+                raise e
+        return None
 
     def get_jobs(self):
         """Get all jobs.

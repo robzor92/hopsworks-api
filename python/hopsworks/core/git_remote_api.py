@@ -17,6 +17,8 @@
 from hopsworks import client, git_op_execution, git_remote
 from hopsworks.engine import git_engine
 
+from hopsworks.client.exceptions import RestAPIError
+
 
 class GitRemoteApi:
     def __init__(self, project_id, project_name):
@@ -36,14 +38,18 @@ class GitRemoteApi:
             "remote",
             str(name),
         ]
-
-        remote = git_remote.GitRemote.from_response_json(
-            _client._send_request("GET", path_params),
-            self._project_id,
-            self._project_name,
-        )
-        remote._repo_id = repo_id
-        return remote
+        try:
+            remote = git_remote.GitRemote.from_response_json(
+                _client._send_request("GET", path_params),
+                self._project_id,
+                self._project_name,
+            )
+            remote._repo_id = repo_id
+            return remote
+        except RestAPIError as e:
+            if e.response.status_code != 404:
+                raise e
+        return None
 
     def _get_remotes(self, repo_id):
 

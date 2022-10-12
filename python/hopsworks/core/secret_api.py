@@ -49,7 +49,7 @@ class SecretsApi:
             name: Name of the project.
             owner: email of the owner for a secret shared with the current project.
         # Returns
-            `Secret`: The Secret object
+            `Secret`: The Secret object or `None` if the secret does not exist.
         # Raises
             `RestAPIError`: If unable to get the secret
         """
