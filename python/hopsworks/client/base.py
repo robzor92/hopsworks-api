@@ -145,7 +145,7 @@ class Client(ABC):
         f_url.path.segments = base_path_params + path_params
         url = str(f_url)
 
-        print("GREP ME: Using API Key {}".format(self._auth))
+        print("GREP ME: Using API Key {}".format(self._auth._token))
 
         request = requests.Request(
             method,
