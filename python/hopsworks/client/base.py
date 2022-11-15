@@ -144,8 +144,8 @@ class Client(ABC):
         f_url = furl.furl(self._base_url)
         f_url.path.segments = base_path_params + path_params
         url = str(f_url)
-        
-        print("Using API Key {}".format(self._auth))
+
+        print("GREP ME: Using API Key {}".format(self._auth))
 
         request = requests.Request(
             method,
