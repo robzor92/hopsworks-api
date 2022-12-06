@@ -32,6 +32,7 @@ class GitRepo:
         provider=None,
         current_branch=None,
         current_commit=None,
+        read_only=None,
         ongoing_operation=None,
         type=None,
         href=None,
