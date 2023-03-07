@@ -108,6 +108,8 @@ class ExecutionEngine:
             await_time -= 1
             time.sleep(3)
 
+        time.sleep(5) # Helps for log aggregation to flush to filesystem
+
         if is_yarn_job and not updated_execution.success:
             self._log.error(
                 "Execution failed with status: {}. See the logs for more information.".format(
