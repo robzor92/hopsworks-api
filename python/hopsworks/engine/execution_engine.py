@@ -101,12 +101,14 @@ class ExecutionEngine:
             execution_state = updated_execution.state
             time.sleep(3)
 
-        # wait for log files to be aggregated, max 5 minute
-        await_time = 100
+        # wait for log files to be aggregated, max 10 minute
+        await_time = 200
         log_aggregation_files_exist = False
         self._log.info("Waiting for log aggregation to finish.")
         while not log_aggregation_files_exist and await_time >= 0:
             updated_execution = self._execution_api._get(job, execution.id)
+            print(updated_execution.stdout_path)
+            print(updated_execution.stderr_path)
 
             log_aggregation_files_exist = self._dataset_api.exists(
                 updated_execution.stdout_path
