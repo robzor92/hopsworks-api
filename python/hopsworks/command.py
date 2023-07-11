@@ -39,10 +39,8 @@ class Command:
         json_decamelized = humps.decamelize(json_dict)
         if "items" in json_decamelized:
             return [cls(**command) for command in json_decamelized["items"]]
-        elif "items" not in json_decamelized:
-            return []
         else:
-            return cls(**json_decamelized)
+            return []
 
     @property
     def status(self):
