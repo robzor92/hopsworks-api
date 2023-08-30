@@ -16,7 +16,7 @@
 
 import os
 import json
-from hopsworks import client, flink_cluster, util
+from hopsworks import client, flink_cluster, util, job
 from hopsworks.core import job_api
 
 
@@ -124,11 +124,12 @@ class FlinkClusterApi:
             name,
         ]
         query_params = {"expand": ["creator"]}
-        return flink_cluster.FlinkCluster.from_response_json(
+        flink_job = job.Job.from_response_json(
             _client._send_request("GET", path_params, query_params=query_params),
             self._project_id,
             self._project_name,
         )
+        return flink_cluster.FlinkCluster(flink_job, None, self._project_id, self._project_name)
 
     def _get_job(self, execution, job_id):
         """Get specific job from the specific execution of the flink cluster.

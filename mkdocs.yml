@@ -22,6 +22,7 @@ nav:
       - Connection: generated/api/connection.md
       - Projects: generated/api/projects.md
       - Jobs: generated/api/jobs.md
+      - Flink: generated/api/flink.md
       - Executions: generated/api/executions.md
       - Environment: generated/api/environment.md
       - GitRepo: generated/api/git_repo.md
