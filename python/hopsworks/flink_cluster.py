@@ -293,25 +293,30 @@ class FlinkCluster():
 
     @property
     def id(self):
-        """Id of the job"""
+        """Id of the cluster"""
         return self._job._id
 
     @property
     def name(self):
-        """Name of the job"""
+        """Name of the cluster"""
         return self._job._name
 
     @property
     def creation_time(self):
-        """Date of creation for the job"""
+        """Date of creation for the cluster"""
         return self._job._creation_time
 
     @property
     def config(self):
-        """Configuration for the job"""
+        """Configuration for the cluster"""
         return self._job._config
 
     @property
     def creator(self):
-        """Creator of the job"""
+        """Creator of the cluster"""
         return self._job._creator
+
+    @property
+    def state(self):
+        """State of the cluster"""
+        return self._execution.state
