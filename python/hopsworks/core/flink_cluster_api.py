@@ -68,7 +68,7 @@ class FlinkClusterApi:
         if self._job_api.exists(name):
             # If the job already exists, retrieve it
             _flink_cluster = self.get_cluster(name)
-            if _flink_cluster.job_type != "FLINK":
+            if _flink_cluster._job.job_type != "FLINK":
                 raise "This is not a Flink cluster. Please use different name to create new Flink cluster"
             return _flink_cluster
         else:
@@ -86,15 +86,16 @@ class FlinkClusterApi:
         path_params = ["project", self._project_id, "jobs", name]
 
         headers = {"content-type": "application/json"}
-        created_cluster = flink_cluster.FlinkCluster.from_response_json(
+        flink_job = job.Job.from_response_json(
             _client._send_request(
                 "PUT", path_params, headers=headers, data=json.dumps(config)
             ),
             self._project_id,
             self._project_name,
         )
-        print(created_cluster.get_url())
-        return created_cluster
+        flink_cluster_obj = flink_cluster.FlinkCluster(flink_job, None, self._project_id, self._project_name)
+        print(flink_cluster_obj.get_url())
+        return flink_cluster_obj
 
     def get_cluster(self, name: str):
         """Get the job corresponding to the flink cluster.
