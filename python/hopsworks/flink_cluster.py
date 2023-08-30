@@ -78,10 +78,10 @@ class FlinkCluster():
             await_time -= 1
             time.sleep(3)
 
-        if execution.state != "RUNNING":
-            raise "FlinkCluster {} did not start within the allocated time and exited with state {}".format(
+        if updated_execution.state != "RUNNING":
+            raise Exception("FlinkCluster {} did not start within the allocated time and exited with state {}".format(
                 execution.id, execution.state
-            )
+            ))
 
         self._execution = updated_execution
 
