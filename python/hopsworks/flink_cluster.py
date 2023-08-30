@@ -84,6 +84,7 @@ class FlinkCluster():
             ))
 
         self._execution = updated_execution
+        return self
 
     def get_jobs(self):
         """Get jobs from the flink cluster.
