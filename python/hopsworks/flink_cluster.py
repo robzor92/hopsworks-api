@@ -15,8 +15,6 @@
 #
 
 import time
-from hopsworks import job, execution
-from hopsworks import flink_execution
 from hopsworks.engine import execution_engine
 from hopsworks.core import execution_api
 from hopsworks.core import flink_cluster_api
