@@ -61,9 +61,9 @@ class FlinkClusterApi:
             name: Name of the cluster.
             config: Configuration of the cluster.
         # Returns
-            `Job`: The Job object representing flink_cluster cluster
+            `FlinkCluster`: The FlinkCluster object representing the cluster
         # Raises
-            `RestAPIError`: If unable to create the job
+            `RestAPIError`: If unable to get the flink cluster object
         """
         if self._job_api.exists(name):
             # If the job already exists, retrieve it
@@ -113,9 +113,9 @@ class FlinkClusterApi:
         # Arguments
             name: Name of the cluster.
         # Returns
-            `Job`: The Job object representing flink_cluster cluster
+            `FlinkCluster`: The FlinkCluster object representing the cluster
         # Raises
-            `RestAPIError`: If unable to get the job
+            `RestAPIError`: If unable to get the flink cluster object
         """
         _client = client.get_instance()
         path_params = [
@@ -143,12 +143,6 @@ class FlinkClusterApi:
         # fetch flink cluster handle
         flink_cluster_api = project.get_flink_cluster_api()
         flink_cluster = flink_cluster_api.get_cluster(name="myFlinkCluster")
-
-        # get all executions(This will return empty list of no execution is running on this Flink cluster)
-        executions = flink_job.get_executions()
-
-        # select 1st execution
-        execution = executions[0]
 
         # get jobs from this execution
         job_id = '113a2af5b724a9b92085dc2d9245e1d6'
@@ -183,12 +177,6 @@ class FlinkClusterApi:
         flink_cluster_api = project.get_flink_cluster_api()
         flink_cluster = flink_cluster_api.get_cluster(name="myFlinkCluster")
 
-        # get all executions(This will return empty list of no execution is running on this Flink cluster)
-        executions = flink_job.get_executions()
-
-        # select 1st execution
-        execution = executions[0]
-
         # get jobs from this execution
         flink_cluster_api.get_jobs(execution)
         ```
@@ -220,12 +208,6 @@ class FlinkClusterApi:
         flink_cluster_api = project.get_flink_cluster_api()
         flink_cluster = flink_cluster_api.get_cluster(name="myFlinkCluster")
 
-        # get all executions(This will return empty list of no execution is running on this Flink cluster)
-        executions = flink_job.get_executions()
-
-        # select 1st execution
-        execution = executions[0]
-
         # stop this execution
         flink_cluster_api.stop_execution(execution)
         ```
@@ -253,12 +235,6 @@ class FlinkClusterApi:
         # fetch flink cluster handle
         flink_cluster_api = project.get_flink_cluster_api()
         flink_cluster = flink_cluster_api.get_cluster(name="myFlinkCluster")
-
-        # get all executions(This will return empty list of no execution is running on this Flink cluster)
-        executions = flink_job.get_executions()
-
-        # select 1st execution
-        execution = executions[0]
 
         # stop the job
         job_id = '113a2af5b724a9b92085dc2d9245e1d6'
@@ -295,12 +271,6 @@ class FlinkClusterApi:
         flink_cluster_api = project.get_flink_cluster_api()
         flink_cluster = flink_cluster_api.get_cluster(name="myFlinkCluster")
 
-        # get all executions(This will return empty list of no execution is running on this Flink cluster)
-        executions = flink_job.get_executions()
-
-        # select 1st execution
-        execution = executions[0]
-
         # get jar files from this execution
         flink_cluster_api.get_jars(execution)
         ```
@@ -331,12 +301,6 @@ class FlinkClusterApi:
         # fetch flink cluster handle
         flink_cluster_api = project.get_flink_cluster_api()
         flink_cluster = flink_cluster_api.get_cluster(name="myFlinkCluster")
-
-        # get all executions(This will return empty list of no execution is running on this Flink cluster)
-        executions = flink_job.get_executions()
-
-        # select 1st execution
-        execution = executions[0]
 
         # upload jar file jobs from this execution
         jar_file_path = "./flink-example.jar"
@@ -380,12 +344,6 @@ class FlinkClusterApi:
         # fetch flink cluster handle
         flink_cluster_api = project.get_flink_cluster_api()
         flink_cluster = flink_cluster_api.get_cluster(name="myFlinkCluster")
-
-        # get all executions(This will return empty list of no execution is running on this Flink cluster)
-        executions = flink_job.get_executions()
-
-        # select 1st execution
-        execution = executions[0]
 
         # upload jar file jobs from this execution
         main_class = "com.example.Main"
@@ -450,12 +408,6 @@ class FlinkClusterApi:
         # fetch flink cluster handle
         flink_cluster_api = project.get_flink_cluster_api()
         flink_cluster = flink_cluster_api.get_cluster(name="myFlinkCluster")
-
-        # get all executions(This will return empty list of no execution is running on this Flink cluster)
-        executions = flink_job.get_executions()
-
-        # select 1st execution
-        execution = executions[0]
 
         # get jobs from this execution
         job_id = '113a2af5b724a9b92085dc2d9245e1d6'

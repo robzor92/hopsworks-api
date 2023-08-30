@@ -61,20 +61,15 @@ PAGES = {
             "hopsworks.execution.Execution", exclude=["from_response_json", "json", "update_from_response_json"]
         ),
     },
-    "api/flink.md": {
+    "api/flink_cluster.md": {
+        "flink_api_handle": ["hopsworks.project.Project.get_flink_cluster_api"],
         "setup_cluster": ["hopsworks.core.flink_cluster_api.FlinkClusterApi.setup_cluster"],
         "get_cluster": ["hopsworks.core.flink_cluster_api.FlinkClusterApi.get_cluster"],
-        "start": ["hopsworks.flink_cluster.FlinkCluster.start"],
-        "get_executions": ["hopsworks.flink_cluster.FlinkCluster.get_executions"],
-        "get_execution": ["hopsworks.flink_cluster.FlinkCluster.get_execution"],
-        "get_jobs": ["hopsworks.flink_execution.FlinkExecution.get_jobs"],
-        "get_job": ["hopsworks.flink_execution.FlinkExecution.get_job"],
-        "stop_job": ["hopsworks.flink_execution.FlinkExecution.stop_job"],
-        "get_jars": ["hopsworks.flink_execution.FlinkExecution.get_jars"],
-        "upload_jar": ["hopsworks.flink_execution.FlinkExecution.upload_jar"],
-        "submit_job": ["hopsworks.flink_execution.FlinkExecution.submit_job"],
-        "job_state": ["hopsworks.flink_execution.FlinkExecution.job_state"],
-        "stop": ["hopsworks.flink_execution.FlinkExecution.stop"],
+        "start_cluster": ["hopsworks.flink_cluster.FlinkCluster.submit_"],
+        "flink_cluster_properties": keras_autodoc.get_properties("hopsworks.flink_cluster.FlinkCluster"),
+        "flink_cluster_methods": keras_autodoc.get_methods(
+            "hopsworks.flink_cluster.FlinkCluster", exclude=["from_response_json", "json"]
+        ),
     },
     "api/environment.md": {
         "env_api_handle": ["hopsworks.project.Project.get_environment_api"],
