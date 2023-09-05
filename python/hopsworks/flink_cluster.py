@@ -18,6 +18,7 @@ import time
 from hopsworks.engine import execution_engine
 from hopsworks.core import execution_api
 from hopsworks.core import flink_cluster_api
+from hopsworks import util
 
 
 class FlinkCluster():
@@ -320,3 +321,10 @@ class FlinkCluster():
     def state(self):
         """State of the cluster"""
         return self._execution.state
+
+    def get_url(self):
+        path = "/p/" + str(self._project_id) + "/jobs/named/" + self.name
+        return (
+                "FlinkCluster created successfully, explore it at "
+                + util.get_hostname_replaced_url(path)
+        )
