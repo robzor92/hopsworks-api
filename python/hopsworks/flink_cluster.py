@@ -25,12 +25,10 @@ class FlinkCluster():
     def __init__(
             self,
             job,
-            execution,
             project_id=None,
             project_name=None,
     ):
         self._job = job
-        self._execution = execution
         self._project_id=project_id
         self._project_name=project_name
 
@@ -40,6 +38,19 @@ class FlinkCluster():
             project_id, project_name
         )
 
+    def _get_execution(self):
+        if self._job is not None:
+            executions = self._job.get_executions()
+            for exec in executions:
+                # If previous start was used on the cluster, always refer to the specific execution_id
+                if self._execution_id is not None:
+                    if  exec.id == self._execution_id:
+                        return exec
+                # Otherwise get the first running one and set the id
+                elif exec.success is None:
+                    self._execution_id = exec.id
+                    return exec
+        return None
 
     def start(self, await_time=120):
         """Start the flink cluster.
@@ -84,7 +95,7 @@ class FlinkCluster():
                 execution.id, execution.state
             ))
 
-        self._execution = updated_execution
+        self._execution_id = execution.id
         return self
 
     def get_jobs(self):
@@ -109,7 +120,7 @@ class FlinkCluster():
             `RestAPIError`: If unable to get the jobs from the execution
         """
 
-        return self._flink_cluster_api._get_jobs(self._execution)
+        return self._flink_cluster_api._get_jobs(self._get_execution())
 
     def get_job(self, job_id):
         """Get specific job from the flink cluster.
@@ -136,7 +147,7 @@ class FlinkCluster():
             `RestAPIError`: If unable to get the jobs from the execution
         """
 
-        return self._flink_cluster_api._get_job(self._execution, job_id)
+        return self._flink_cluster_api._get_job(self._get_execution(), job_id)
 
     def stop_job(self, job_id):
         """Stop specific job in the flink cluster.
@@ -160,7 +171,7 @@ class FlinkCluster():
         # Raises
             `RestAPIError`: If unable to stop the job
         """
-        self._flink_cluster_api._stop_job(self._execution, job_id)
+        self._flink_cluster_api._stop_job(self._get_execution(), job_id)
 
     def get_jars(self):
         """Get already uploaded jars from the flink cluster.
@@ -182,7 +193,7 @@ class FlinkCluster():
         # Raises
             `RestAPIError`: If unable to get jars from the flink cluster.
         """
-        return self._flink_cluster_api._get_jars(self._execution)
+        return self._flink_cluster_api._get_jars(self._get_execution())
 
     def upload_jar(self, jar_file):
         """Uploaded jar file to the specific execution of the flink cluster.
@@ -206,7 +217,7 @@ class FlinkCluster():
             `RestAPIError`: If unable to upload jar file
         """
 
-        self._flink_cluster_api._upload_jar(self._execution, jar_file)
+        self._flink_cluster_api._upload_jar(self._get_execution(), jar_file)
 
     def submit_job(self, jar_id, main_class, job_arguments=None):
         """Submit job using the specific jar file, already uploaded to this execution of the flink cluster.
@@ -240,7 +251,7 @@ class FlinkCluster():
         """
 
         return self._flink_cluster_api._submit_job(
-            self._execution, jar_id, main_class, job_arguments
+            self._get_execution(), jar_id, main_class, job_arguments
         )
 
     def job_state(self, job_id):
@@ -269,7 +280,7 @@ class FlinkCluster():
             `RestAPIError`: If unable to get the job state from the flink cluster.
         """
 
-        return self._flink_cluster_api._job_state(self._execution, job_id)
+        return self._flink_cluster_api._job_state(self._get_execution(), job_id)
 
     def stop(self):
         """Stop this cluster.
@@ -290,7 +301,7 @@ class FlinkCluster():
         # Raises
             `RestAPIError`: If unable to stop the flink cluster.
         """
-        self._flink_cluster_api._stop_execution(self._execution)
+        self._flink_cluster_api._stop_execution(self._get_execution())
 
     @property
     def id(self):
@@ -320,7 +331,7 @@ class FlinkCluster():
     @property
     def state(self):
         """State of the cluster"""
-        return self._execution.state
+        return self._get_execution().state
 
     def get_url(self):
         path = "/p/" + str(self._project_id) + "/jobs/named/" + self.name

@@ -93,7 +93,7 @@ class FlinkClusterApi:
             self._project_id,
             self._project_name,
         )
-        flink_cluster_obj = flink_cluster.FlinkCluster(flink_job, None, self._project_id, self._project_name)
+        flink_cluster_obj = flink_cluster.FlinkCluster(flink_job, self._project_id, self._project_name)
         print(flink_cluster_obj.get_url())
         return flink_cluster_obj
 
@@ -130,7 +130,8 @@ class FlinkClusterApi:
             self._project_id,
             self._project_name,
         )
-        return flink_cluster.FlinkCluster(flink_job, None, self._project_id, self._project_name)
+
+        return flink_cluster.FlinkCluster(flink_job, self._project_id, self._project_name)
 
     def _get_job(self, execution, job_id):
         """Get specific job from the specific execution of the flink cluster.
