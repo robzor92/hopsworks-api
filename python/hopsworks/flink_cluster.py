@@ -53,6 +53,15 @@ class FlinkCluster():
                     return exec
         return None
 
+    def _count_ongoing_executions(self):
+        ongoing_executions=0
+        if self._job is not None:
+            executions = self._job.get_executions()
+            for exec in executions:
+                if exec.success is None:
+                    ongoing_executions+=1
+        return ongoing_executions
+
     def start(self, await_time=120):
         """Start the flink cluster.
 
@@ -73,6 +82,11 @@ class FlinkCluster():
         # Raises
             `RestAPIError`: If unable to start the flink cluster.
         """
+
+        if self._count_ongoing_executions() > 0:
+            raise Exception("There is already a running FlinkCluster. Use FlinkClusterApi.get_cluster('{}') to get a reference to it.".format(
+                self._job.name
+            ))
 
         execution = self._execution_api._start(self._job)
         updated_execution = self._execution_api._get(self._job, execution.id)
