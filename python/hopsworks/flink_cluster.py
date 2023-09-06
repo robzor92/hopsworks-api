@@ -31,6 +31,7 @@ class FlinkCluster():
         self._job = job
         self._project_id=project_id
         self._project_name=project_name
+        self._execution_id=None
 
         self._execution_engine = execution_engine.ExecutionEngine(project_id)
         self._execution_api = execution_api.ExecutionsApi(project_id)
@@ -44,7 +45,7 @@ class FlinkCluster():
             for exec in executions:
                 # If previous start was used on the cluster, always refer to the specific execution_id
                 if self._execution_id is not None:
-                    if  exec.id == self._execution_id:
+                    if exec.id == self._execution_id:
                         return exec
                 # Otherwise get the first running one and set the id
                 elif exec.success is None:
