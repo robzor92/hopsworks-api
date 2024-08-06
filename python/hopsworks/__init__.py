@@ -187,7 +187,8 @@ def login(
                 host=host, port=port, api_key_file=api_key_path
             )
             _connected_project = _prompt_project(_hw_connection, project, is_app)
-            _set_active_project(_connected_project)
+            if _connected_project:
+                _set_active_project(_connected_project)
             print(
                 "\nLogged in to project, explore it here "
                 + _connected_project.get_url()
@@ -216,7 +217,8 @@ def login(
     try:
         _hw_connection = _hw_connection(host=host, port=port, api_key_value=api_key)
         _connected_project = _prompt_project(_hw_connection, project, is_app)
-        _set_active_project(_connected_project)
+        if _connected_project:
+            _set_active_project(_connected_project)
     except RestAPIError as e:
         logout()
         raise e
@@ -400,7 +402,8 @@ def create_project(name: str, description: str = None, feature_store_topic: str 
     )
     if _connected_project is None:
         _connected_project = new_project
-        _set_active_project(_connected_project)
+        if _connected_project:
+            _set_active_project(_connected_project)
         print(
             "Setting {} as the current project, a reference can be retrieved by calling hopsworks.get_current_project()".format(
                 _connected_project.name
