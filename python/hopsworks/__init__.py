@@ -429,4 +429,4 @@ def get_secrets_api():
 def _set_active_project(project):
     _client = client.get_instance()
     if isinstance(_client, client.external.Client):
-        _client.provide_project(project)
+        _client.provide_project(project.name)
