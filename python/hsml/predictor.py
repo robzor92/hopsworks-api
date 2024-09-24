@@ -246,6 +246,7 @@ class Predictor(DeployableComponent):
 
     @classmethod
     def extract_fields_from_json(cls, json_decamelized):
+        print(json_decamelized)
         kwargs = {}
         kwargs["name"] = json_decamelized.pop("name")
         kwargs["description"] = util.extract_field_from_json(
