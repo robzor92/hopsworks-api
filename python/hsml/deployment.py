@@ -282,6 +282,7 @@ class Deployment:
         )
 
     def update_from_response_json(self, json_dict):
+        print(json_dict)
         self._predictor.update_from_response_json(json_dict)
         self.__init__(
             predictor=self._predictor,
