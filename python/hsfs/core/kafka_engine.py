@@ -270,6 +270,7 @@ def build_ack_callback_and_optional_progress_bar(
                 raise err  # Stop producing and show error
         # update progress bar for each msg
         if not is_multi_part_insert:
-            progress_bar.update()
+            pass
+            #progress_bar.update()
 
     return acked, progress_bar
