@@ -174,6 +174,7 @@ class DatasetApi:
         # Raises
             `RestAPIError`: If unable to upload the file
         """
+        
         # local path could be absolute or relative,
         if not os.path.isabs(local_path) and os.path.exists(
             os.path.join(os.getcwd(), local_path)
@@ -193,6 +194,9 @@ class DatasetApi:
                         local_path
                     )
                 )
+
+        if os.path.isdir(destination_path):
+            self.mkdir(destination_path)
 
         if os.path.isdir(local_path):
             # if path is a dir, upload files and folders iteratively
