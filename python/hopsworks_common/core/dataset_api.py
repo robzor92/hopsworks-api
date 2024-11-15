@@ -211,7 +211,7 @@ class DatasetApi:
                     # - files is the list of file names present in the root dir
                     # we need to replace the local path prefix with the hdfs path prefix (i.e., /srv/hops/....../root with /Projects/.../)
                     remote_base_path = root.replace(
-                        local_path, upload_path
+                        local_path, destination_path
                     ).replace(os.sep, "/")
                     for d_name in dirs:
                         self.mkdir(remote_base_path + "/" + d_name)
