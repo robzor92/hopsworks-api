@@ -214,7 +214,7 @@ class DatasetApi:
                 for d_name in dirs:
                     self.mkdir(remote_base_path + "/" + d_name)
                 for f_name in files:
-                    self._upload_file(f_name, root, remote_base_path, chunk_size, simultaneous_chunks, max_chunk_retries, chunk_retry_interval)
+                    self._upload_file(f_name, root + os.sep + f_name, remote_base_path, chunk_size, simultaneous_chunks, max_chunk_retries, chunk_retry_interval)
         else:
             self._upload_file(file_name, local_path, upload_path, chunk_size, simultaneous_chunks, max_chunk_retries, chunk_retry_interval)
 
