@@ -194,10 +194,6 @@ class DatasetApi:
                     )
                 )
 
-
-
-        """Copy or upload model files from a local path to the model files folder in the Models dataset."""
-        n_dirs, n_files = 0, 0
         if os.path.isdir(local_path):
             # if path is a dir, upload files and folders iteratively
             for root, dirs, files in os.walk(local_path):
@@ -207,31 +203,14 @@ class DatasetApi:
                 # - files is the list of file names present in the root dir
                 # we need to replace the local path prefix with the hdfs path prefix (i.e., /srv/hops/....../root with /Projects/.../)
                 remote_base_path = root.replace(
-                    local_path, to_model_files_path
+                    local_path, upload_path
                 ).replace(os.sep, "/")
                 for d_name in dirs:
-                    self._engine.mkdir(remote_base_path + "/" + d_name)
-                    n_dirs += 1
-                    update_upload_progress(n_dirs, n_files)
+                    self.mkdir(remote_base_path + "/" + d_name)
                 for f_name in files:
-                    self._engine.upload(
-                        root + "/" + f_name,
-                        remote_base_path,
-                        upload_configuration=upload_configuration,
-                        )
-                    n_files += 1
-                    update_upload_progress(n_dirs, n_files)
+                    self._upload_file(f_name, root, remote_base_path, chunk_size, simultaneous_uploads, max_chunk_retries, chunk_retry_interval)
         else:
-            # if path is a file, upload file
-            self._engine.upload(
-                from_local_model_path,
-                to_model_files_path,
-                upload_configuration=upload_configuration,
-            )
-            n_files += 1
-            update_upload_progress(n_dirs, n_files)
-
-        self._upload_file(file_name, local_path, upload_path, chunk_size, simultaneous_uploads, max_chunk_retries, chunk_retry_interval)
+            self._upload_file(file_name, local_path, upload_path, chunk_size, simultaneous_uploads, max_chunk_retries, chunk_retry_interval)
 
         return upload_path + "/" + os.path.basename(local_path)
 
