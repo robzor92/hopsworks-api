@@ -204,20 +204,34 @@ class DatasetApi:
             self.mkdir(destination_path)
 
         if os.path.isdir(local_path):
-            # if path is a dir, upload files and folders iteratively
-            for root, dirs, files in os.walk(local_path):
-                # os.walk(local_model_path), where local_model_path is expected to be an absolute path
-                # - root is the absolute path of the directory being walked
-                # - dirs is the list of directory names present in the root dir
-                # - files is the list of file names present in the root dir
-                # we need to replace the local path prefix with the hdfs path prefix (i.e., /srv/hops/....../root with /Projects/.../)
-                remote_base_path = root.replace(
-                    local_path, upload_path
-                ).replace(os.sep, "/")
-                for d_name in dirs:
-                    self.mkdir(remote_base_path + "/" + d_name)
-                for f_name in files:
-                    self._upload_file(f_name, root + os.sep + f_name, remote_base_path, chunk_size, simultaneous_chunks, max_chunk_retries, chunk_retry_interval)
+            with ThreadPoolExecutor(simultaneous_uploads) as executor:
+                # if path is a dir, upload files and folders iteratively
+                for root, dirs, files in os.walk(local_path):
+                    # os.walk(local_model_path), where local_model_path is expected to be an absolute path
+                    # - root is the absolute path of the directory being walked
+                    # - dirs is the list of directory names present in the root dir
+                    # - files is the list of file names present in the root dir
+                    # we need to replace the local path prefix with the hdfs path prefix (i.e., /srv/hops/....../root with /Projects/.../)
+                    remote_base_path = root.replace(
+                        local_path, upload_path
+                    ).replace(os.sep, "/")
+                    for d_name in dirs:
+                        self.mkdir(remote_base_path + "/" + d_name)
+
+                    # uploading files in the same folder is done concurrently
+                    futures = [
+                        executor.submit(
+                            self._upload_file, f_name, root + os.sep + f_name, remote_base_path, chunk_size, simultaneous_chunks, max_chunk_retries, chunk_retry_interval
+                        )
+                        for f_name in files
+                    ]
+
+                    # wait for all upload tasks to complete
+                    _, _ = wait(futures)
+                    try:
+                        _ = [future.result() for future in futures]
+                    except Exception as e:
+                        raise e
         else:
             self._upload_file(file_name, local_path, upload_path, chunk_size, simultaneous_chunks, max_chunk_retries, chunk_retry_interval)
 
