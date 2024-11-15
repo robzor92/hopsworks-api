@@ -145,6 +145,7 @@ class DatasetApi:
         overwrite: bool = False,
         chunk_size=DEFAULT_FLOW_CHUNK_SIZE,
         simultaneous_uploads=3,
+        simultaneous_chunks=3,
         max_chunk_retries=1,
         chunk_retry_interval=1,
     ):
@@ -166,7 +167,8 @@ class DatasetApi:
             upload_path: path to directory where to upload the file in Hopsworks Filesystem
             overwrite: overwrite file or directory if exists
             chunk_size: upload chunk size in bytes. Default 1048576 bytes
-            simultaneous_uploads: number of simultaneous chunks to upload. Default 3
+            simultaneous_chunks: number of simultaneous chunks to upload for each file upload. Default 3
+            simultaneous_uploads: number of simultaneous files to be uploaded for directories. Default 3
             max_chunk_retries: maximum retry for a chunk. Default is 1
             chunk_retry_interval: chunk retry interval in seconds. Default is 1sec
         # Returns
@@ -174,7 +176,7 @@ class DatasetApi:
         # Raises
             `RestAPIError`: If unable to upload the file
         """
-        
+
         # local path could be absolute or relative,
         if not os.path.isabs(local_path) and os.path.exists(
             os.path.join(os.getcwd(), local_path)
@@ -212,14 +214,14 @@ class DatasetApi:
                 for d_name in dirs:
                     self.mkdir(remote_base_path + "/" + d_name)
                 for f_name in files:
-                    self._upload_file(f_name, root, remote_base_path, chunk_size, simultaneous_uploads, max_chunk_retries, chunk_retry_interval)
+                    self._upload_file(f_name, root, remote_base_path, chunk_size, simultaneous_chunks, max_chunk_retries, chunk_retry_interval)
         else:
-            self._upload_file(file_name, local_path, upload_path, chunk_size, simultaneous_uploads, max_chunk_retries, chunk_retry_interval)
+            self._upload_file(file_name, local_path, upload_path, chunk_size, simultaneous_chunks, max_chunk_retries, chunk_retry_interval)
 
         return upload_path + "/" + os.path.basename(local_path)
 
 
-    def _upload_file(self, file_name, local_path, upload_path, chunk_size, simultaneous_uploads, max_chunk_retries, chunk_retry_interval):
+    def _upload_file(self, file_name, local_path, upload_path, chunk_size, simultaneous_chunks, max_chunk_retries, chunk_retry_interval):
 
         file_size = os.path.getsize(local_path)
 
@@ -241,10 +243,10 @@ class DatasetApi:
             except Exception:
                 self._log.exception("Failed to initialize progress bar.")
                 self._log.info("Starting upload")
-            with ThreadPoolExecutor(simultaneous_uploads) as executor:
+            with ThreadPoolExecutor(simultaneous_chunks) as executor:
                 while True:
                     chunks = []
-                    for _ in range(simultaneous_uploads):
+                    for _ in range(simultaneous_chunks):
                         chunk = f.read(chunk_size)
                         if not chunk:
                             break
