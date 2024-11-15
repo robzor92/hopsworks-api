@@ -185,7 +185,10 @@ class DatasetApi:
 
         _, file_name = os.path.split(local_path)
 
-        destination_path = upload_path + "/" + file_name
+        if os.path.isdir(local_path):
+            destination_path = upload_path
+        else:
+            destination_path = upload_path + "/" + file_name
 
         if self.exists(destination_path):
             if overwrite:
