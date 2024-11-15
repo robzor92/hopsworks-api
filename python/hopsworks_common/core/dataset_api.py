@@ -162,9 +162,9 @@ class DatasetApi:
 
         ```
         # Arguments
-            local_path: local path to file to upload
+            local_path: local path to file or directory to upload
             upload_path: path to directory where to upload the file in Hopsworks Filesystem
-            overwrite: overwrite file if exists
+            overwrite: overwrite file or directory if exists
             chunk_size: upload chunk size in bytes. Default 1048576 bytes
             simultaneous_uploads: number of simultaneous chunks to upload. Default 3
             max_chunk_retries: maximum retry for a chunk. Default is 1
@@ -180,8 +180,6 @@ class DatasetApi:
         ):
             local_path = os.path.join(os.getcwd(), local_path)
 
-        file_size = os.path.getsize(local_path)
-
         _, file_name = os.path.split(local_path)
 
         destination_path = upload_path + "/" + file_name
@@ -195,6 +193,52 @@ class DatasetApi:
                         local_path
                     )
                 )
+
+
+
+        """Copy or upload model files from a local path to the model files folder in the Models dataset."""
+        n_dirs, n_files = 0, 0
+        if os.path.isdir(local_path):
+            # if path is a dir, upload files and folders iteratively
+            for root, dirs, files in os.walk(local_path):
+                # os.walk(local_model_path), where local_model_path is expected to be an absolute path
+                # - root is the absolute path of the directory being walked
+                # - dirs is the list of directory names present in the root dir
+                # - files is the list of file names present in the root dir
+                # we need to replace the local path prefix with the hdfs path prefix (i.e., /srv/hops/....../root with /Projects/.../)
+                remote_base_path = root.replace(
+                    local_path, to_model_files_path
+                ).replace(os.sep, "/")
+                for d_name in dirs:
+                    self._engine.mkdir(remote_base_path + "/" + d_name)
+                    n_dirs += 1
+                    update_upload_progress(n_dirs, n_files)
+                for f_name in files:
+                    self._engine.upload(
+                        root + "/" + f_name,
+                        remote_base_path,
+                        upload_configuration=upload_configuration,
+                        )
+                    n_files += 1
+                    update_upload_progress(n_dirs, n_files)
+        else:
+            # if path is a file, upload file
+            self._engine.upload(
+                from_local_model_path,
+                to_model_files_path,
+                upload_configuration=upload_configuration,
+            )
+            n_files += 1
+            update_upload_progress(n_dirs, n_files)
+
+        self._upload_file(file_name, local_path, upload_path, chunk_size, simultaneous_uploads, max_chunk_retries, chunk_retry_interval)
+
+        return upload_path + "/" + os.path.basename(local_path)
+
+
+    def _upload_file(self, file_name, local_path, upload_path, chunk_size, simultaneous_uploads, max_chunk_retries, chunk_retry_interval):
+
+        file_size = os.path.getsize(local_path)
 
         num_chunks = math.ceil(file_size / chunk_size)
 
@@ -254,8 +298,6 @@ class DatasetApi:
                 pbar.close()
             else:
                 self._log.info("Upload finished")
-
-        return upload_path + "/" + os.path.basename(local_path)
 
     def _upload_chunk(
         self,
