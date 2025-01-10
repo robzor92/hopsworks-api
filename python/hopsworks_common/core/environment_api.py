@@ -19,7 +19,7 @@ from typing import List, Optional
 
 from hopsworks_common import client, environment, usage
 from hopsworks_common.engine import environment_engine
-
+from hopsworks_common.client.exceptions import RestAPIError
 
 class EnvironmentApi:
     def __init__(self):
@@ -54,7 +54,7 @@ class EnvironmentApi:
         # Returns
             `Environment`: The Environment object
         # Raises
-            `RestAPIError`: If unable to create the environment
+            `hopsworks.client.exceptions.RestAPIError`: If unable to create the environment
         """
         _client = client.get_instance()
 
@@ -99,7 +99,7 @@ class EnvironmentApi:
 
     @usage.method_logger
     def get_environment(self, name: str) -> environment.Environment:
-        """Get handle for the Python environment for the project
+        """Get handle for a Python environment in the project
 
         ```python
 
@@ -115,20 +115,26 @@ class EnvironmentApi:
         # Arguments
             name: name of the environment
         # Returns
-            `Environment`: The Environment object
+            `Environment`: The Environment object or `None` if it does not exist.
         # Raises
-            `RestAPIError`: If unable to get the environment
+            `hopsworks.client.exceptions.RestAPIError`: If unable to get the environment
         """
         _client = client.get_instance()
 
         path_params = ["project", _client._project_id, "python", "environments", name]
         query_params = {"expand": ["libraries", "commands"]}
         headers = {"content-type": "application/json"}
-        return environment.Environment.from_response_json(
-            _client._send_request(
-                "GET", path_params, query_params=query_params, headers=headers
+        try:
+            return environment.Environment.from_response_json(
+                _client._send_request(
+                    "GET", path_params, query_params=query_params, headers=headers
+                )
             )
-        )
+        except RestAPIError as e:
+            if e.response.json().get("errorCode", "") == 300000 and e.response.status_code == 404:
+                return None
+            else:
+                raise e
 
     def _delete(self, name):
         """Delete the Python environment.

@@ -16,7 +16,8 @@
 from typing import Dict, List, Optional, Union
 
 from hopsworks_common import client, usage, util
-from hsml import predictor as predictor_mod
+
+from hsml import model, predictor as predictor_mod
 from hsml.client.exceptions import ModelServingException
 from hsml.client.istio.utils.infer_type import InferInput
 from hsml.constants import DEPLOYABLE_COMPONENT, PREDICTOR_STATE
@@ -73,6 +74,8 @@ class Deployment:
             await_update: If the deployment is running, awaiting time (seconds) for the running instances to be updated.
                           If the running instances are not updated within this timespan, the call to this method returns while
                           the update in the background.
+        # Raises
+            `hopsworks.client.exceptions.RestAPIError`: In case the backend encounters an issue
         """
 
         self._serving_engine.save(self, await_update)
@@ -85,6 +88,8 @@ class Deployment:
             await_running: Awaiting time (seconds) for the deployment to start.
                            If the deployment has not started within this timespan, the call to this method returns while
                            it deploys in the background.
+        # Raises
+            `hopsworks.client.exceptions.RestAPIError`: In case the backend encounters an issue
         """
 
         self._serving_engine.start(self, await_status=await_running)
@@ -97,6 +102,8 @@ class Deployment:
             await_stopped: Awaiting time (seconds) for the deployment to stop.
                            If the deployment has not stopped within this timespan, the call to this method returns while
                            it stopping in the background.
+        # Raises
+            `hopsworks.client.exceptions.RestAPIError`: In case the backend encounters an issue
         """
 
         self._serving_engine.stop(self, await_status=await_stopped)
@@ -109,6 +116,8 @@ class Deployment:
             force: Force the deletion of the deployment.
                    If the deployment is running, it will be stopped and deleted automatically.
                    !!! warn A call to this method does not ask for a second confirmation.
+        # Raises
+            `hopsworks.client.exceptions.RestAPIError`: In case the backend encounters an issue
         """
 
         self._serving_engine.delete(self, force)
@@ -118,6 +127,8 @@ class Deployment:
 
         # Returns
             `PredictorState`. The state of the deployment.
+        # Raises
+            `hopsworks.client.exceptions.RestAPIError`: In case the backend encounters an issue
         """
 
         return self._serving_engine.get_state(self)
@@ -127,6 +138,8 @@ class Deployment:
 
         # Returns
             `bool`. Whether the deployment is created or not.
+        # Raises
+            `hopsworks.client.exceptions.RestAPIError`: In case the backend encounters an issue
         """
 
         return (
@@ -143,6 +156,8 @@ class Deployment:
 
         # Returns
             `bool`. Whether the deployment is ready or not.
+        # Raises
+            `hopsworks.client.exceptions.RestAPIError`: In case the backend encounters an issue
         """
 
         status = self._serving_engine.get_state(self).status
@@ -160,6 +175,8 @@ class Deployment:
 
         # Returns
             `bool`. Whether the deployment is stopped or not.
+        # Raises
+            `hopsworks.client.exceptions.RestAPIError`: In case the backend encounters an issue
         """
 
         status = self._serving_engine.get_state(self).status
@@ -207,11 +224,13 @@ class Deployment:
 
         # Returns
             `dict`. Inference response.
+        # Raises
+            `hopsworks.client.exceptions.RestAPIError`: In case the backend encounters an issue
         """
 
         return self._serving_engine.predict(self, data, inputs)
 
-    def get_model(self):
+    def get_model(self) -> model.Model:
         """Retrieve the metadata object for the model being used by this deployment"""
         return self._model_api.get(
             self.model_name, self.model_version, self.model_registry_id
@@ -223,6 +242,8 @@ class Deployment:
 
         # Arguments
             local_path: path where to download the artifact files in the local filesystem
+        # Raises
+            `hopsworks.client.exceptions.RestAPIError`: In case the backend encounters an issue
         """
 
         return self._serving_engine.download_artifact_files(self, local_path=local_path)
@@ -233,6 +254,8 @@ class Deployment:
         # Arguments
             component: Deployment component to get the logs from (e.g., predictor or transformer)
             tail: Number of most recent lines to retrieve from the logs.
+        # Raises
+            `hopsworks.client.exceptions.RestAPIError`: In case the backend encounters an issue
         """
 
         # validate component

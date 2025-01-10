@@ -232,7 +232,7 @@ class Job:
         # Returns
             `List[Execution]`
         # Raises
-            `RestAPIError` in case the backend fails to retrieve executions.
+            `hopsworks.client.exceptions.RestAPIError` in case the backend fails to retrieve executions.
         """
         return self._execution_api._get_all(self)
 
@@ -257,7 +257,7 @@ class Job:
         !!! danger "Potentially dangerous operation"
             This operation deletes the job and all executions.
         # Raises
-            `RestAPIError`.
+            `hopsworks.client.exceptions.RestAPIError`.
         """
         self._job_api._delete(self)
 

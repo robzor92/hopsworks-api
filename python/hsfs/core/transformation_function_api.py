@@ -21,6 +21,7 @@ from hopsworks_common import client
 from hsfs import (
     transformation_function,
 )
+from hsfs.client import exceptions
 
 
 class TransformationFunctionApi:
@@ -78,17 +79,20 @@ class TransformationFunctionApi:
             "transformationfunctions",
         ]
 
+        query_params = {}
         if name:
             query_params = {"name": name}
             if version:
                 query_params["version"] = version
+        try:
             return transformation_function.TransformationFunction.from_response_json(
                 _client._send_request("GET", path_params, query_params)
             )
-        else:
-            return transformation_function.TransformationFunction.from_response_json(
-                _client._send_request("GET", path_params)
-            )
+        except exceptions.RestAPIError as e:
+            if e.response.json().get("errorCode", "") == exceptions.RestAPIError.FeatureStoreErrorCode.TRANSFORMATION_FUNCTION_NOT_FOUND and e.response.status_code == 400:
+                return None
+            else:
+                raise e
 
     def delete(
         self,

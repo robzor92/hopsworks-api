@@ -21,7 +21,6 @@ import socket
 from typing import Any, Dict, Union
 
 from hopsworks_common import client, constants, kafka_schema, kafka_topic, usage
-from hopsworks_common.client.exceptions import KafkaException
 from hopsworks_common.client.external import Client
 
 
@@ -57,7 +56,7 @@ class KafkaApi:
         # Returns
             `KafkaTopic`: The KafkaTopic object
         # Raises
-            `RestAPIError`: If unable to create the topic
+            `hopsworks.client.exceptions.RestAPIError`: If unable to create the topic
         """
         _client = client.get_instance()
 
@@ -113,7 +112,7 @@ class KafkaApi:
         # Returns
             `KafkaSchema`: The KafkaSchema object
         # Raises
-            `RestAPIError`: If unable to create the schema
+            `hopsworks.client.exceptions.RestAPIError`: If unable to create the schema
         """
         _client = client.get_instance()
 
@@ -145,17 +144,15 @@ class KafkaApi:
         # Arguments
             name: name of the topic
         # Returns
-            `KafkaTopic`: The KafkaTopic object
+            `KafkaTopic`: The KafkaTopic object or None if not found
         # Raises
-            `RestAPIError`: If unable to get the topic
+            `hopsworks.client.exceptions.RestAPIError`: If unable to get the topics
         """
         topics = self.get_topics()
 
         for topic in topics:
             if topic.name == name:
                 return topic
-
-        raise KafkaException("No topic named {} could be found".format(name))
 
     @usage.method_logger
     def get_topics(self):
@@ -164,7 +161,7 @@ class KafkaApi:
         # Returns
             `List[KafkaTopic]`: List of KafkaTopic objects
         # Raises
-            `RestAPIError`: If unable to get the topics
+            `hopsworks.client.exceptions.RestAPIError`: If unable to get the topics
         """
         _client = client.get_instance()
         path_params = ["project", _client._project_id, "kafka", "topics"]
@@ -214,7 +211,7 @@ class KafkaApi:
         # Returns
             `List[str]`: List of registered subjects
         # Raises
-            `RestAPIError`: If unable to get the subjects
+            `hopsworks.client.exceptions.RestAPIError`: If unable to get the subjects
         """
         topics = self.get_topics()
 
@@ -234,7 +231,7 @@ class KafkaApi:
         # Returns
             `List[KafkaSchema]`: List of KafkaSchema objects
         # Raises
-            `RestAPIError`: If unable to get the schemas
+            `hopsworks.client.exceptions.RestAPIError`: If unable to get the schemas
         """
         _client = client.get_instance()
         path_params = [
@@ -262,20 +259,14 @@ class KafkaApi:
             subject: subject name
             version: version number
         # Returns
-            `KafkaSchema`: KafkaSchema object
+            `KafkaSchema`: KafkaSchema object or `None` if it does not exist.
         # Raises
-            `RestAPIError`: If unable to get the schema
+            `hopsworks.client.exceptions.RestAPIError`: If unable to get the schemas
         """
         schemas = self.get_schemas(subject)
         for schema in schemas:
             if schema.version == version:
                 return schema
-
-        raise KafkaException(
-            "No schema for subject {} and version {} could be found".format(
-                subject, version
-            )
-        )
 
     def _get_schema_details(self, subject: str, version: int):
         """Get the schema details.
@@ -342,7 +333,7 @@ class KafkaApi:
         # Returns
             `dict`: The kafka configuration
         # Raises
-            `RestAPIError`: If unable to get the kafka configuration.
+            `hopsworks.client.exceptions.RestAPIError`: If unable to get the schemas
         """
 
         _client = client.get_instance()

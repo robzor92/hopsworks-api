@@ -19,6 +19,7 @@ from typing import Dict, List, Optional, Union
 
 from hopsworks_common import client
 from hsfs.core.feature_monitoring_result import FeatureMonitoringResult
+from hopsworks_common.client.exceptions import RestAPIError
 
 
 class FeatureMonitoringResultApi:
@@ -108,9 +109,15 @@ class FeatureMonitoringResultApi:
         path_params.append(config_id)
         headers = {"content-type": "application/json"}
 
-        return FeatureMonitoringResult.from_response_json(
-            _client._send_request("GET", path_params, query_params, headers=headers)
-        )
+        try:
+            return FeatureMonitoringResult.from_response_json(
+                _client._send_request("GET", path_params, query_params, headers=headers)
+            )
+        except RestAPIError as e:
+            if e.response.json().get("errorCode", "") == RestAPIError.FeatureStoreErrorCode.FEATURE_MONITORING_CONFIG_NOT_FOUND and e.response.status_code == 404:
+                return []
+            else:
+                raise e
 
     def get_by_id(
         self,

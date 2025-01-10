@@ -31,6 +31,7 @@ from hsml.client.istio.utils.infer_type import (
 )
 from hsml.constants import ARTIFACT_VERSION
 from hsml.constants import INFERENCE_ENDPOINTS as IE
+from hopsworks_common.client.exceptions import RestAPIError
 
 
 class ServingApi:
@@ -53,10 +54,17 @@ class ServingApi:
             "serving",
             str(id),
         ]
-        deployment_json = _client._send_request("GET", path_params)
-        deployment_instance = deployment.Deployment.from_response_json(deployment_json)
-        deployment_instance.model_registry_id = _client._project_id
-        return deployment_instance
+
+        try:
+            deployment_json = _client._send_request("GET", path_params)
+            deployment_instance = deployment.Deployment.from_response_json(deployment_json)
+            deployment_instance.model_registry_id = _client._project_id
+            return deployment_instance
+        except RestAPIError as e:
+            if e.response.json().get("errorCode", "") == 240000 and e.response.status_code == 404:
+                return None
+            else:
+                raise e
 
     def get(self, name: str):
         """Get the metadata of a deployment with a certain name.
@@ -70,12 +78,19 @@ class ServingApi:
         _client = client.get_instance()
         path_params = ["project", _client._project_id, "serving"]
         query_params = {"name": name}
-        deployment_json = _client._send_request(
-            "GET", path_params, query_params=query_params
-        )
-        deployment_instance = deployment.Deployment.from_response_json(deployment_json)
-        deployment_instance.model_registry_id = _client._project_id
-        return deployment_instance
+
+        try:
+            deployment_json = _client._send_request(
+                "GET", path_params, query_params=query_params
+            )
+            deployment_instance = deployment.Deployment.from_response_json(deployment_json)
+            deployment_instance.model_registry_id = _client._project_id
+            return deployment_instance
+        except RestAPIError as e:
+            if e.response.json().get("errorCode", "") == 240000 and e.response.status_code == 404:
+                return None
+            else:
+                raise e
 
     def get_all(self, model_name: str = None, status: str = None):
         """Get the metadata of all deployments.

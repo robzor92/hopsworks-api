@@ -171,7 +171,7 @@ class KafkaTopic:
         !!! danger "Potentially dangerous operation"
             This operation deletes the topic.
         # Raises
-            `RestAPIError`.
+            `hopsworks.client.exceptions.RestAPIError`.
         """
         self._kafka_api._delete_topic(self.name)
 

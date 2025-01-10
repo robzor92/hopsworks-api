@@ -488,7 +488,7 @@ class FeatureMonitoringConfig:
             Calling this method does not affect the ongoing schedule.
 
         # Raises
-            `FeatureStoreException`: If the feature monitoring config has not been saved.
+            `hopsworks.client.exceptions.FeatureStoreException`: If the feature monitoring config has not been saved.
         # Returns
             `Job`. A handle for the job computing the statistics.
         """
@@ -513,7 +513,7 @@ class FeatureMonitoringConfig:
             job.executions
             ```
         # Raises
-            `FeatureStoreException`: If the feature monitoring config has not been saved.
+            `hopsworks.client.exceptions.FeatureStoreException`: If the feature monitoring config has not been saved.
         # Returns
             `Job`. A handle for the job computing the statistics.
         """
@@ -539,7 +539,7 @@ class FeatureMonitoringConfig:
             my_monitoring_config.delete()
             ```
         # Raises
-            `FeatureStoreException`: If the feature monitoring config has not been saved.
+            `hopsworks.client.exceptions.FeatureStoreException`: If the feature monitoring config has not been saved.
         """
         if not self._id:
             raise FeatureStoreException(
@@ -560,7 +560,7 @@ class FeatureMonitoringConfig:
             my_monitoring_config.disable()
             ```
         # Raises
-            `FeatureStoreException`: If the feature monitoring config has not been saved.
+            `hopsworks.client.exceptions.FeatureStoreException`: If the feature monitoring config has not been saved.
         """
         self._update_schedule(enabled=False)
 
@@ -577,7 +577,7 @@ class FeatureMonitoringConfig:
             my_monitoring_config.enable()
             ```
         # Raises
-            `FeatureStoreException`: If the feature monitoring config has not been saved.
+            `hopsworks.client.exceptions.FeatureStoreException`: If the feature monitoring config has not been saved.
         """
         self._update_schedule(enabled=True)
 
@@ -621,7 +621,7 @@ class FeatureMonitoringConfig:
             end_time: The end time of the time range to fetch the history for.
             with_statistics: Whether to include the computed statistics in the results.
         # Raises
-            `FeatureStoreException`: If the feature monitoring config has not been saved.
+            `hopsworks.client.exceptions.FeatureStoreException`: If the feature monitoring config has not been saved.
         """
         if not self._id:
             raise FeatureStoreException(

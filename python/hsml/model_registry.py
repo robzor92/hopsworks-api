@@ -18,13 +18,15 @@ import warnings
 
 import humps
 from hopsworks_common import usage, util
+from hsml import model
+from typing import List
 from hsml.core import model_api
 from hsml.llm import signature as llm_signature  # noqa: F401
 from hsml.python import signature as python_signature  # noqa: F401
 from hsml.sklearn import signature as sklearn_signature  # noqa: F401
 from hsml.tensorflow import signature as tensorflow_signature  # noqa: F401
 from hsml.torch import signature as torch_signature  # noqa: F401
-
+from hopsworks.client import exceptions
 
 class ModelRegistry:
     DEFAULT_VERSION = 1
@@ -63,7 +65,7 @@ class ModelRegistry:
         return cls(**json_decamelized)
 
     @usage.method_logger
-    def get_model(self, name: str, version: int = None):
+    def get_model(self, name: str, version: int = None) -> model.Model:
         """Get a model entity from the model registry.
         Getting a model from the Model Registry means getting its metadata handle
         so you can subsequently download the model directory.
@@ -73,9 +75,9 @@ class ModelRegistry:
             version: Version of the model to retrieve, defaults to `None` and will
                 return the `version=1`.
         # Returns
-            `Model`: The model metadata object.
+            `Model`: The model metadata object or `None` if it does not exist.
         # Raises
-            `RestAPIError`: If unable to retrieve model from the model registry.
+            `hopsworks.client.exceptions.RestAPIError`: If unable to retrieve model from the model registry.
         """
 
         if version is None:
@@ -88,15 +90,24 @@ class ModelRegistry:
             )
             version = self.DEFAULT_VERSION
 
-        return self._model_api.get(
-            name,
-            version,
-            self.model_registry_id,
-            shared_registry_project_name=self.shared_registry_project_name,
-        )
+        try:
+            return self._model_api.get(
+                name,
+                version,
+                self.model_registry_id,
+                shared_registry_project_name=self.shared_registry_project_name,
+            )
+        except exceptions.RestAPIError as e:
+            if (
+                    e.response.json().get("errorCode", "") == 360000
+                    and e.response.status_code == 404
+            ):
+                return None
+            else:
+                raise e
 
     @usage.method_logger
-    def get_models(self, name: str):
+    def get_models(self, name: str) -> List[model.Model]:
         """Get all model entities from the model registry for a specified name.
         Getting all models from the Model Registry for a given name returns a list of model entities, one for each version registered under
         the specified model name.
@@ -106,7 +117,7 @@ class ModelRegistry:
         # Returns
             `List[Model]`: A list of model metadata objects.
         # Raises
-            `RestAPIError`: If unable to retrieve model versions from the model registry.
+            `hopsworks.client.exceptions.RestAPIError`: If unable to retrieve model versions from the model registry.
         """
 
         return self._model_api.get_models(
@@ -116,7 +127,7 @@ class ModelRegistry:
         )
 
     @usage.method_logger
-    def get_best_model(self, name: str, metric: str, direction: str):
+    def get_best_model(self, name: str, metric: str, direction: str) -> model.Model:
         """Get the best performing model entity from the model registry.
         Getting the best performing model from the Model Registry means specifying in addition to the name, also a metric
         name corresponding to one of the keys in the training_metrics dict of the model and a direction. For example to
@@ -127,9 +138,9 @@ class ModelRegistry:
             metric: Name of the key in the training metrics field to compare.
             direction: 'max' to get the model entity with the highest value of the set metric, or 'min' for the lowest.
         # Returns
-            `Model`: The model metadata object.
+            `Model`: The model metadata object or `None` if it does not exist.
         # Raises
-            `RestAPIError`: If unable to retrieve model from the model registry.
+            `hopsworks.client.exceptions.RestAPIError`: If unable to retrieve model from the model registry.
         """
 
         model = self._model_api.get_models(

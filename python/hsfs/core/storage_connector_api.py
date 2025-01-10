@@ -16,7 +16,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict
-
+from hsfs.client import exceptions
 from hopsworks_common import client
 from hsfs import storage_connector
 
@@ -34,7 +34,15 @@ class StorageConnectorApi:
             name,
         ]
         query_params = {"temporaryCredentials": True}
-        return _client._send_request("GET", path_params, query_params=query_params)
+
+
+        try:
+            return _client._send_request("GET", path_params, query_params=query_params)
+        except exceptions.RestAPIError as e:
+            if e.response.json().get("errorCode", "") == exceptions.RestAPIError.FeatureStoreErrorCode.STORAGE_CONNECTOR_NOT_FOUND and e.response.status_code == 404:
+                return None
+            else:
+                raise e
 
     def get(
         self, feature_store_id: int, name: str
@@ -48,9 +56,11 @@ class StorageConnectorApi:
         :return: the storage connector
         :rtype: StorageConnector
         """
-        return storage_connector.StorageConnector.from_response_json(
-            self._get(feature_store_id, name)
-        )
+        storage_connector_json = self._get(feature_store_id, name)
+        if storage_connector_json:
+            return storage_connector.StorageConnector.from_response_json(
+                storage_connector_json
+            )
 
     def refetch(
         self, storage_connector_instance: storage_connector.StorageConnector

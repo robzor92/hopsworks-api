@@ -20,6 +20,7 @@ from typing import List, Optional, Union
 from hopsworks_common import client
 from hsfs.core import feature_monitoring_config as fmc
 from hsfs.core.job import Job
+from hopsworks_common.client.exceptions import RestAPIError
 
 
 class FeatureMonitoringConfigApi:
@@ -168,10 +169,15 @@ class FeatureMonitoringConfigApi:
             project_id=_client._project_id,
             name=name,
         )
-
-        return fmc.FeatureMonitoringConfig.from_response_json(
-            _client._send_request("GET", path_params)
-        )
+        try:
+            return fmc.FeatureMonitoringConfig.from_response_json(
+                _client._send_request("GET", path_params)
+            )
+        except RestAPIError as e:
+            if e.response.json().get("errorCode", "") == RestAPIError.FeatureStoreErrorCode.FEATURE_MONITORING_CONFIG_NOT_FOUND and e.response.status_code == 404:
+                return None
+            else:
+                raise e
 
     def get_by_entity(self) -> List[fmc.FeatureMonitoringConfig]:
         """Get all Feature Monitoring Configurations attached to a Feature Name.

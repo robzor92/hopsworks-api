@@ -29,7 +29,7 @@ import pandas as pd
 from hopsworks_common import client
 from hopsworks_common.core.constants import HAS_NUMPY, HAS_POLARS
 from hsfs import engine
-from hsfs.core import storage_connector_api
+from hsfs.core import storage_connector_api, explicit_provenance
 
 
 if HAS_NUMPY:
@@ -195,7 +195,7 @@ class StorageConnector(ABC):
         """
         return {}
 
-    def get_feature_groups_provenance(self):
+    def get_feature_groups_provenance(self) -> explicit_provenance.Links:
         """Get the generated feature groups using this storage connector, based on explicit
         provenance. These feature groups can be accessible or inaccessible. Explicit
         provenance does not track deleted generated feature group links, so deleted
@@ -203,13 +203,14 @@ class StorageConnector(ABC):
         For inaccessible feature groups, only a minimal information is returned.
 
         # Returns
-            `ExplicitProvenance.Links`: the feature groups generated using this
-            storage connector
+            `Links`: the feature groups generated using this storage connector or `None` if none were created
 
         # Raises
-            `hsfs.client.exceptions.RestAPIError`.
+            `hopsworks.client.exceptions.RestAPIError`: In case the backend encounters an issue
         """
-        return self._storage_connector_api.get_feature_groups_provenance(self)
+        links = self._storage_connector_api.get_feature_groups_provenance(self)
+        if not links.is_empty():
+            return links
 
     def get_feature_groups(self):
         """Get the feature groups using this storage connector, based on explicit
@@ -221,15 +222,15 @@ class StorageConnector(ABC):
         """
         feature_groups_provenance = self.get_feature_groups_provenance()
 
-        if feature_groups_provenance.inaccessible or feature_groups_provenance.deleted:
+        if feature_groups_provenance and (feature_groups_provenance.inaccessible or feature_groups_provenance.deleted):
             _logger.info(
                 "There are deleted or inaccessible feature groups. For more details access `get_feature_groups_provenance`"
             )
 
-        if feature_groups_provenance.accessible:
+        if feature_groups_provenance and feature_groups_provenance.accessible:
             return feature_groups_provenance.accessible
         else:
-            return None
+            return []
 
 
 class HopsFSConnector(StorageConnector):

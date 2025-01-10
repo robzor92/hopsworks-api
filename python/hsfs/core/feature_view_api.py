@@ -23,6 +23,7 @@ from hsfs import feature_view, training_dataset
 from hsfs.constructor import query, serving_prepared_statement
 from hsfs.core import explicit_provenance, job, training_dataset_job_conf
 from hsfs.core.job import Job
+from hsfs.core.feature_logging import FeatureLogging
 
 
 class FeatureViewApi:
@@ -98,7 +99,6 @@ class FeatureViewApi:
             `List[FeatureView]`: A list that contains all version of the feature view.
 
         # Raises
-            `RestAPIError`: If the feature view cannot be found from the backend.
             `ValueError`: If the feature group associated with the feature view cannot be found.
         """
         path = self._base_path + [name]
@@ -118,6 +118,8 @@ class FeatureViewApi:
                     " Some feature groups used in the query may have been deleted. You can clean up this feature view on the UI"
                     " or `FeatureView.clean`."
                 ) from e
+            elif e.response.json().get("errorCode", "") == RestAPIError.FeatureStoreErrorCode.FEATURE_VIEW_NOT_FOUND and e.response.status_code == 404:
+                return []
             else:
                 raise e
 
@@ -133,7 +135,6 @@ class FeatureViewApi:
             `FeatureView`
 
         # Raises
-            `RestAPIError`: If the feature view cannot be found from the backend.
             `ValueError`: If the feature group associated with the feature view cannot be found.
         """
         path = self._base_path + [name, self._VERSION, version]
@@ -152,6 +153,8 @@ class FeatureViewApi:
                     " Some feature groups used in the query may have been deleted. You can clean up this feature view on the UI"
                     " or `FeatureView.clean`."
                 ) from e
+            elif e.response.json().get("errorCode", "") == RestAPIError.FeatureStoreErrorCode.FEATURE_VIEW_NOT_FOUND and e.response.status_code == 404:
+                return None
             else:
                 raise e
 
@@ -481,7 +484,15 @@ class FeatureViewApi:
             feature_view_version,
             self._LOGGING,
         ]
-        return _client._send_request("GET", path_params, {})
+        try:
+            return FeatureLogging.from_response_json(
+                _client._send_request("GET", path_params, {})
+            )
+        except RestAPIError as e:
+            if e.response.json().get("errorCode", "") == RestAPIError.FeatureStoreErrorCode.FEATURE_VIEW_LOGGING_NOT_FOUND and e.response.status_code == 400:
+                return None
+            else:
+                raise e
 
     def delete_feature_logs(
         self,

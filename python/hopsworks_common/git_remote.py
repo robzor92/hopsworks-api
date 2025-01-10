@@ -65,7 +65,7 @@ class GitRemote:
         """Remove the git remote from the repo.
 
         # Raises
-            `RestAPIError`.
+            `hopsworks.client.exceptions.RestAPIError`.
         """
         self._git_remote_api._delete(self._repo_id, self.name)
 

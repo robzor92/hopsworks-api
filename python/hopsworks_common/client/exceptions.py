@@ -33,8 +33,15 @@ class RestAPIError(Exception):
     STATUS_CODE_INTERNAL_SERVER_ERROR = 500
 
     class FeatureStoreErrorCode(int, Enum):
+        FEATURE_GROUP_NOT_FOUND = 270009
+        FEATURE_VIEW_NOT_FOUND = 270181
         FEATURE_GROUP_COMMIT_NOT_FOUND = 270227
         STATISTICS_NOT_FOUND = 270228
+        STORAGE_CONNECTOR_NOT_FOUND = 270042
+        TRAINING_DATASET_NOT_FOUND = 270012
+        TRANSFORMATION_FUNCTION_NOT_FOUND = 270160
+        FEATURE_MONITORING_CONFIG_NOT_FOUND = 270233
+        FEATURE_VIEW_LOGGING_NOT_FOUND = 270248
 
         def __eq__(self, other: Union[int, Any]) -> bool:
             if isinstance(other, int):

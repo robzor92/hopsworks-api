@@ -33,7 +33,7 @@ class FlinkClusterApi:
         # Returns
             `dict`: Default configuration for the Flink cluster,
         # Raises
-            `RestAPIError`: If unable to get the job configuration
+            `hopsworks.client.exceptions.RestAPIError`: If unable to get the job configuration
         """
         return self._job_api.get_configuration("FLINK")
 
@@ -61,7 +61,7 @@ class FlinkClusterApi:
         # Returns
             `FlinkCluster`: The FlinkCluster object representing the cluster
         # Raises
-            `RestAPIError`: If unable to get the flink cluster object
+            `hopsworks.client.exceptions.RestAPIError`: If unable to get the flink cluster object
         """
         if self._job_api.exists(name):
             # If the job already exists, retrieve it
@@ -116,7 +116,7 @@ class FlinkClusterApi:
         # Returns
             `FlinkCluster`: The FlinkCluster object representing the cluster
         # Raises
-            `RestAPIError`: If unable to get the flink cluster object
+            `hopsworks.client.exceptions.RestAPIError`: If unable to get the flink cluster object
         """
         _client = client.get_instance()
         path_params = [
@@ -126,11 +126,16 @@ class FlinkClusterApi:
             name,
         ]
         query_params = {"expand": ["creator"]}
-        flink_job = job.Job.from_response_json(
-            _client._send_request("GET", path_params, query_params=query_params)
-        )
-
-        return flink_cluster.FlinkCluster(flink_job)
+        try:
+            flink_job = job.Job.from_response_json(
+                _client._send_request("GET", path_params, query_params=query_params)
+            )
+            return flink_cluster.FlinkCluster(flink_job)
+        except RestAPIError as e:
+            if e.response.json().get("errorCode", "") == 130009 and e.response.status_code == 404:
+                return None
+            else:
+                raise e
 
     def _get_job(self, execution, job_id):
         """Get specific job from the specific execution of the flink cluster.
@@ -155,7 +160,7 @@ class FlinkClusterApi:
         # Returns
             `Dict`: Dict with flink job id and and status of the job.
         # Raises
-            `RestAPIError`: If unable to get the jobs from the execution
+            `hopsworks.client.exceptions.RestAPIError`: If unable to get the jobs from the execution
         """
 
         _client = client.get_instance()
@@ -186,7 +191,7 @@ class FlinkClusterApi:
         # Returns
             `List[Dict]`: The array of dicts with flink job id and and status of the job.
         # Raises
-            `RestAPIError`: If unable to get the jobs from the execution
+            `hopsworks.client.exceptions.RestAPIError`: If unable to get the jobs from the execution
         """
 
         _client = client.get_instance()
@@ -215,7 +220,7 @@ class FlinkClusterApi:
         # Arguments
             execution: Execution object.
         # Raises
-            `RestAPIError`: If unable to stop the execution
+            `hopsworks.client.exceptions.RestAPIError`: If unable to stop the execution
         """
         _client = client.get_instance()
         path_params = ["hopsworks-api", "flinkmaster", execution.app_id, "cluster"]
@@ -245,7 +250,7 @@ class FlinkClusterApi:
             execution: Execution object.
             job_id: id of the job within this execution
         # Raises
-            `RestAPIError`: If unable to stop the job
+            `hopsworks.client.exceptions.RestAPIError`: If unable to stop the job
         """
         _client = client.get_instance()
         path_params = [
@@ -280,7 +285,7 @@ class FlinkClusterApi:
         # Returns
             `List[Dict]`: The array of dicts with jar metadata.
         # Raises
-            `RestAPIError`: If unable to get jars from the execution
+            `hopsworks.client.exceptions.RestAPIError`: If unable to get jars from the execution
         """
 
         _client = client.get_instance()
@@ -311,7 +316,7 @@ class FlinkClusterApi:
             execution: Execution object.
             jar_file: path to the jar file.
         # Raises
-            `RestAPIError`: If unable to upload jar file
+            `hopsworks.client.exceptions.RestAPIError`: If unable to upload jar file
         """
 
         _client = client.get_instance()
@@ -363,7 +368,7 @@ class FlinkClusterApi:
         # Returns
             `str`:  job id.
         # Raises
-            `RestAPIError`: If unable to submit the job.
+            `hopsworks.client.exceptions.RestAPIError`: If unable to submit the job.
         """
 
         _client = client.get_instance()
@@ -420,7 +425,7 @@ class FlinkClusterApi:
             `str`: status of the job. Possible states:  "INITIALIZING", "CREATED", "RUNNING", "FAILING", "FAILED",
             "CANCELLING", "CANCELED",  "FINISHED", "RESTARTING", "SUSPENDED", "RECONCILING".
         # Raises
-            `RestAPIError`: If unable to get the jobs from the execution
+            `hopsworks.client.exceptions.RestAPIError`: If unable to get the jobs from the execution
         """
         _client = client.get_instance()
         path_params = [

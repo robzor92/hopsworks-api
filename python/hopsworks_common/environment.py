@@ -190,7 +190,7 @@ class Environment:
         !!! danger "Potentially dangerous operation"
             This operation deletes the python environment.
         # Raises
-            `RestAPIError`.
+            `hopsworks.client.exceptions.RestAPIError`.
         """
         self._environment_api._delete(self.name)
 
