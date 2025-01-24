@@ -38,13 +38,13 @@ from hopsworks_common.client.exceptions import FeatureStoreException
 from hopsworks_common.core.constants import HAS_NUMPY, HAS_POLARS
 from hsfs import (
     feature_group,
-    storage_connector,
     tag,
     training_dataset,
     training_dataset_feature,
     usage,
     util,
 )
+from hsfs.storage_connector import StorageConnector
 from hsfs import serving_key as skm
 from hsfs.constructor import filter, query
 from hsfs.constructor.filter import Filter, Logic
@@ -1272,7 +1272,7 @@ class FeatureView:
         self,
         start_time: Optional[Union[str, int, datetime, date]] = "",
         end_time: Optional[Union[str, int, datetime, date]] = "",
-        storage_connector: Optional[storage_connector.StorageConnector] = None,
+        storage_connector: Optional[StorageConnector] = None,
         location: Optional[str] = "",
         description: Optional[str] = "",
         extra_filter: Optional[Union[filter.Filter, filter.Logic]] = None,
@@ -1494,7 +1494,7 @@ class FeatureView:
         train_end: Optional[Union[str, int, datetime, date]] = "",
         test_start: Optional[Union[str, int, datetime, date]] = "",
         test_end: Optional[Union[str, int, datetime, date]] = "",
-        storage_connector: Optional[storage_connector.StorageConnector] = None,
+        storage_connector: Optional[StorageConnector] = None,
         location: Optional[str] = "",
         description: Optional[str] = "",
         extra_filter: Optional[Union[filter.Filter, filter.Logic]] = None,
@@ -1771,7 +1771,7 @@ class FeatureView:
         validation_end: Optional[Union[str, int, datetime, date]] = "",
         test_start: Optional[Union[str, int, datetime, date]] = "",
         test_end: Optional[Union[str, int, datetime, date]] = "",
-        storage_connector: Optional[storage_connector.StorageConnector] = None,
+        storage_connector: Optional[StorageConnector] = None,
         location: Optional[str] = "",
         description: Optional[str] = "",
         extra_filter: Optional[Union[filter.Filter, filter.Logic]] = None,
