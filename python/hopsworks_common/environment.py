@@ -24,6 +24,8 @@ from hopsworks_common.engine import environment_engine
 
 
 class Environment:
+    NOT_FOUND_ERROR_CODE = 300000
+
     def __init__(
         self,
         name=None,

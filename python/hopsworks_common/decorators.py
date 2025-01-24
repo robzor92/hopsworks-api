@@ -28,6 +28,8 @@ from hopsworks_common.core.constants import (
     polars_not_installed_message,
 )
 
+from hopsworks.client.exceptions import RestAPIError
+
 
 def not_connected(fn):
     @functools.wraps(fn)
@@ -47,6 +49,20 @@ def connected(fn):
         return fn(inst, *args, **kwargs)
 
     return if_connected
+
+def catch_not_found(object_class, default_return):
+    def decorator(f):
+        @functools.wraps(f)
+        def g(*args, **kwds):
+            try:
+                return f(*args, **kwds)
+            except RestAPIError as e:
+                if e.response.status_code in [400, 404] and e.response.json().get("errorCode", "") == object_class.NOT_FOUND_ERROR_CODE:
+                    return default_return
+                else:
+                    raise e
+        return g
+    return decorator
 
 
 class HopsworksConnectionError(Exception):
