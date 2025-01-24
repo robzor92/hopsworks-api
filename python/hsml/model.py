@@ -19,14 +19,14 @@ import logging
 import os
 import re
 import warnings
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, Self
 
 import humps
 from hopsworks_common import client, usage, util
 from hopsworks_common.constants import ARTIFACT_VERSION, MODEL_REGISTRY
 from hopsworks_common.constants import INFERENCE_ENDPOINTS as IE
 from hsfs.feature_view import FeatureView
-from hsml import deployment, model
+from hsml import deployment
 from hsml.core import explicit_provenance
 from hsml.engine import model_engine
 from hsml.inference_batcher import InferenceBatcher
@@ -105,7 +105,7 @@ class Model:
         await_registration=480,
         keep_original_files=False,
         upload_configuration: Optional[Dict[str, Any]] = None,
-    ) -> model.Model:
+    ) -> Self:
         """Persist this model including model files and metadata to the model registry.
 
         # Arguments

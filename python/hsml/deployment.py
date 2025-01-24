@@ -17,7 +17,8 @@ from typing import Dict, List, Optional, Union
 
 from hopsworks_common import client, usage, util
 
-from hsml import model, predictor as predictor_mod
+from hsml import predictor as predictor_mod
+from hsml.model import Model
 from hsml.client.exceptions import ModelServingException
 from hsml.client.istio.utils.infer_type import InferInput
 from hsml.constants import DEPLOYABLE_COMPONENT, PREDICTOR_STATE
@@ -230,7 +231,7 @@ class Deployment:
 
         return self._serving_engine.predict(self, data, inputs)
 
-    def get_model(self) -> model.Model:
+    def get_model(self) -> Model:
         """Retrieve the metadata object for the model being used by this deployment"""
         return self._model_api.get(
             self.model_name, self.model_version, self.model_registry_id
