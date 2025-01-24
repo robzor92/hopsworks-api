@@ -22,6 +22,8 @@ from hopsworks_common.engine import execution_engine
 
 
 class FlinkCluster:
+    NOT_FOUND_ERROR_CODE = 130009
+
     def __init__(
         self,
         job,

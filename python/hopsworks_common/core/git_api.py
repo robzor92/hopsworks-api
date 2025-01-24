@@ -16,7 +16,7 @@
 
 import json
 import logging
-from typing import List, Union
+from typing import List, Union, Optional
 
 from hopsworks_common import (
     client,
@@ -136,7 +136,7 @@ class GitApi:
         return self._git_provider_api._get_providers()
 
     @usage.method_logger
-    def get_provider(self, provider: str) -> git_provider.GitProvider:
+    def get_provider(self, provider: str) -> Optional[git_provider.GitProvider]:
         """Get the configured Git provider
 
         # Arguments
@@ -173,7 +173,7 @@ class GitApi:
         self._git_provider_api._set_provider(provider, username, token)
 
     @usage.method_logger
-    def get_repo(self, name: str, path: str = None) -> git_repo.GitRepo:
+    def get_repo(self, name: str, path: str = None) -> Optional[git_repo.GitRepo]:
         """Get the cloned Git repository
 
         # Arguments

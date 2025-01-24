@@ -41,6 +41,7 @@ _logger = logging.getLogger(__name__)
 
 
 class Model:
+    NOT_FOUND_ERROR_CODE = 360000
     """Metadata object representing a model in the Model Registry."""
 
     def __init__(

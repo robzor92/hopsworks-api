@@ -16,9 +16,8 @@
 
 import getpass
 import json
-from typing import List
-from hopsworks_common import client, secret, util
-from hopsworks_common.client.exceptions import RestAPIError
+from typing import List, Optional
+from hopsworks_common import client, secret, util, decorators
 from hopsworks_common.core import project_api
 
 
@@ -45,7 +44,8 @@ class SecretsApi:
             _client._send_request("GET", path_params)
         )
 
-    def get_secret(self, name: str, owner: str = None) -> secret.Secret:
+    @decorators.catch_not_found(secret.Secret, None)
+    def get_secret(self, name: str, owner: str = None) -> Optional[secret.Secret]:
         """Get a secret.
 
         # Arguments
@@ -71,18 +71,10 @@ class SecretsApi:
                 "secrets",
                 "shared",
             ]
-        try:
-            return secret.Secret.from_response_json(
-                _client._send_request("GET", path_params, query_params=query_params)
-            )[0]
-        except RestAPIError as e:
-            if (
-                    e.response.json().get("errorCode", "") == 160048
-                    and e.response.status_code == 404
-            ):
-                return None
-            else:
-                raise e
+
+        return secret.Secret.from_response_json(
+            _client._send_request("GET", path_params, query_params=query_params)
+        )[0]
 
     def get(self, name: str, owner: str = None) -> str:
         """Get the secret's value.

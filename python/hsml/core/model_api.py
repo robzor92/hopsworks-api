@@ -16,7 +16,7 @@
 
 import json
 from typing import Union
-
+from hopsworks.common import decorators
 from hsml import client, model, tag
 from hsml.core import explicit_provenance
 from hopsworks_common.client.exceptions import RestAPIError
@@ -200,6 +200,7 @@ class ModelApi:
         ]
         _client._send_request("DELETE", path_params)
 
+    @decorators.catch_not_found(tag.Tag, {})
     def get_tags(self, model_instance):
         """Get the tags.
 
@@ -222,20 +223,14 @@ class ModelApi:
             model_instance.id,
             "tags",
         ]
+        return {
+            tag._name: json.loads(tag._value)
+            for tag in tag.Tag.from_response_json(
+                _client._send_request("GET", path_params)
+            )
+        }
 
-        try:
-            return {
-                tag._name: json.loads(tag._value)
-                for tag in tag.Tag.from_response_json(
-                    _client._send_request("GET", path_params)
-                )
-            }
-        except RestAPIError as e:
-            if e.response.json().get("errorCode", "") == 370002 and e.response.status_code == 404:
-                return {}
-            else:
-                raise e
-
+    @decorators.catch_not_found(tag.Tag, None)
     def get_tag(self, model_instance, name: str):
         """Get the tag.
 
@@ -260,15 +255,9 @@ class ModelApi:
             name
         ]
 
-        try:
-            return tag.Tag.from_response_json(
-                _client._send_request("GET", path_params)
-            )[name]
-        except RestAPIError as e:
-            if e.response.json().get("errorCode", "") == 370002 and e.response.status_code == 404:
-                return None
-            else:
-                raise e
+        return tag.Tag.from_response_json(
+            _client._send_request("GET", path_params)
+        )[name]
 
     def get_feature_view_provenance(self, model_instance):
         """Get the parent feature view of this model, based on explicit provenance.

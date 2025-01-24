@@ -17,16 +17,15 @@
 import warnings
 
 import humps
-from hopsworks_common import usage, util
+from hopsworks_common import usage, util, decorators
 from hsml import model
-from typing import List
+from typing import List, Optional
 from hsml.core import model_api
 from hsml.llm import signature as llm_signature  # noqa: F401
 from hsml.python import signature as python_signature  # noqa: F401
 from hsml.sklearn import signature as sklearn_signature  # noqa: F401
 from hsml.tensorflow import signature as tensorflow_signature  # noqa: F401
 from hsml.torch import signature as torch_signature  # noqa: F401
-from hopsworks.client import exceptions
 
 class ModelRegistry:
     DEFAULT_VERSION = 1
@@ -65,7 +64,8 @@ class ModelRegistry:
         return cls(**json_decamelized)
 
     @usage.method_logger
-    def get_model(self, name: str, version: int = None) -> model.Model:
+    @decorators.catch_not_found(model.Model, None)
+    def get_model(self, name: str, version: int = None) -> Optional[model.Model]:
         """Get a model entity from the model registry.
         Getting a model from the Model Registry means getting its metadata handle
         so you can subsequently download the model directory.
@@ -90,21 +90,13 @@ class ModelRegistry:
             )
             version = self.DEFAULT_VERSION
 
-        try:
-            return self._model_api.get(
-                name,
-                version,
-                self.model_registry_id,
-                shared_registry_project_name=self.shared_registry_project_name,
-            )
-        except exceptions.RestAPIError as e:
-            if (
-                    e.response.json().get("errorCode", "") == 360000
-                    and e.response.status_code == 404
-            ):
-                return None
-            else:
-                raise e
+
+        return self._model_api.get(
+            name,
+            version,
+            self.model_registry_id,
+            shared_registry_project_name=self.shared_registry_project_name,
+        )
 
     @usage.method_logger
     def get_models(self, name: str) -> List[model.Model]:
@@ -127,7 +119,7 @@ class ModelRegistry:
         )
 
     @usage.method_logger
-    def get_best_model(self, name: str, metric: str, direction: str) -> model.Model:
+    def get_best_model(self, name: str, metric: str, direction: str) -> Optional[model.Model]:
         """Get the best performing model entity from the model registry.
         Getting the best performing model from the Model Registry means specifying in addition to the name, also a metric
         name corresponding to one of the keys in the training_metrics dict of the model and a direction. For example to

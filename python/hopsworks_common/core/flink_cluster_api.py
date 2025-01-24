@@ -16,8 +16,9 @@
 
 import json
 import os
+from typing import Optional
 
-from hopsworks_common import client, flink_cluster, job, usage, util
+from hopsworks_common import client, flink_cluster, job, usage, util, decorators
 from hopsworks_common.client.exceptions import RestAPIError
 from hopsworks_common.core import job_api
 
@@ -98,7 +99,8 @@ class FlinkClusterApi:
         return flink_cluster_obj
 
     @usage.method_logger
-    def get_cluster(self, name: str):
+    @decorators.catch_not_found(flink_cluster.FlinkCluster, None)
+    def get_cluster(self, name: str) -> Optional[flink_cluster.FlinkCluster]:
         """Get the job corresponding to the flink cluster.
         ```python
 
@@ -114,7 +116,7 @@ class FlinkClusterApi:
         # Arguments
             name: Name of the cluster.
         # Returns
-            `FlinkCluster`: The FlinkCluster object representing the cluster
+            `FlinkCluster`: The FlinkCluster object representing the cluster or `None` if it does not exist.
         # Raises
             `hopsworks.client.exceptions.RestAPIError`: If unable to get the flink cluster object
         """
@@ -126,16 +128,10 @@ class FlinkClusterApi:
             name,
         ]
         query_params = {"expand": ["creator"]}
-        try:
-            flink_job = job.Job.from_response_json(
-                _client._send_request("GET", path_params, query_params=query_params)
-            )
-            return flink_cluster.FlinkCluster(flink_job)
-        except RestAPIError as e:
-            if e.response.json().get("errorCode", "") == 130009 and e.response.status_code == 404:
-                return None
-            else:
-                raise e
+        flink_job = job.Job.from_response_json(
+            _client._send_request("GET", path_params, query_params=query_params)
+        )
+        return flink_cluster.FlinkCluster(flink_job)
 
     def _get_job(self, execution, job_id):
         """Get specific job from the specific execution of the flink cluster.

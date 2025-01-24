@@ -31,6 +31,7 @@ from hsml.transformer import Transformer
 
 
 class Deployment:
+    NOT_FOUND_ERROR_CODE = 240000
     """Metadata object representing a deployment in Model Serving."""
 
     def __init__(

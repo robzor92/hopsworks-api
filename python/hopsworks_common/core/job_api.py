@@ -17,10 +17,9 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, Union, List
+from typing import Any, Dict, Union, List, Optional
 
-from hopsworks_common import client, execution, job, job_schedule, usage, util
-from hopsworks_common.client.exceptions import RestAPIError
+from hopsworks_common import client, execution, job, job_schedule, usage, util, decorators
 from hopsworks_common.core import (
     ingestion_job_conf,
     job_configuration,
@@ -71,7 +70,8 @@ class JobApi:
         return created_job
 
     @usage.method_logger
-    def get_job(self, name: str) -> job.Job:
+    @decorators.catch_not_found(job.Job, None)
+    def get_job(self, name: str) -> Optional[job.Job]:
         """Get a job.
 
         # Arguments
@@ -89,13 +89,7 @@ class JobApi:
             name,
         ]
         query_params = {"expand": ["creator"]}
-        try:
-            return job.Job.from_response_json(_client._send_request("GET", path_params, query_params=query_params))
-        except RestAPIError as e:
-            if e.response.json().get("errorCode", "") == 130009 and e.response.status_code == 404:
-                return None
-            else:
-                raise e
+        return job.Job.from_response_json(_client._send_request("GET", path_params, query_params=query_params))
 
     @usage.method_logger
     def get_jobs(self) -> List[job.Job]:

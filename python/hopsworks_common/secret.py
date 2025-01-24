@@ -22,6 +22,8 @@ from hopsworks_common.core import secret_api
 
 
 class Secret:
+    NOT_FOUND_ERROR_CODE = 160048
+
     def __init__(
         self,
         name=None,

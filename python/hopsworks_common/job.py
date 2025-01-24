@@ -30,6 +30,8 @@ from hopsworks_common.job_schedule import JobSchedule
 
 
 class Job:
+    NOT_FOUND_ERROR_CODE = 130009
+
     def __init__(
         self,
         id,

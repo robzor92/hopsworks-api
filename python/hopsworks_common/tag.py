@@ -23,6 +23,8 @@ from hopsworks_common import util
 
 
 class Tag:
+    NOT_FOUND_ERROR_CODE = 370000
+
     def __init__(
         self,
         name,

@@ -18,9 +18,9 @@ from __future__ import annotations
 
 import json
 import socket
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, Optional
 
-from hopsworks_common import client, constants, kafka_schema, kafka_topic, usage
+from hopsworks_common import client, constants, kafka_schema, kafka_topic, usage, decorators
 from hopsworks_common.client.external import Client
 
 
@@ -138,13 +138,13 @@ class KafkaApi:
         return self.get_schema(schema.subject, schema.version)
 
     @usage.method_logger
-    def get_topic(self, name: str):
+    def get_topic(self, name: str) -> Optional[kafka_topic.KafkaTopic]:
         """Get kafka topic by name.
 
         # Arguments
             name: name of the topic
         # Returns
-            `KafkaTopic`: The KafkaTopic object or None if not found
+            `KafkaTopic`: The KafkaTopic object or `None` if not found
         # Raises
             `hopsworks.client.exceptions.RestAPIError`: If unable to get the topics
         """
@@ -252,7 +252,7 @@ class KafkaApi:
         return schemas
 
     @usage.method_logger
-    def get_schema(self, subject: str, version: int):
+    def get_schema(self, subject: str, version: int) -> Optional[kafka_schema.KafkaSchema]:
         """Get schema given subject name and version.
 
         # Arguments

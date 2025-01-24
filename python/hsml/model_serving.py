@@ -46,7 +46,7 @@ class ModelServing:
         self._serving_api = serving_api.ServingApi()
 
     @usage.method_logger
-    def get_deployment_by_id(self, id: int) -> Deployment:
+    def get_deployment_by_id(self, id: int) -> Optional[Deployment]:
         """Get a deployment by id from Model Serving.
         Getting a deployment from Model Serving means getting its metadata handle
         so you can subsequently operate on it (e.g., start or stop).
@@ -70,7 +70,7 @@ class ModelServing:
         return self._serving_api.get_by_id(id)
 
     @usage.method_logger
-    def get_deployment(self, name: str = None) -> Deployment:
+    def get_deployment(self, name: str = None) -> Optional[Deployment]:
         """Get a deployment by name from Model Serving.
 
         !!! example

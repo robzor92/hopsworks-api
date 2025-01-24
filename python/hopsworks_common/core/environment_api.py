@@ -97,8 +97,8 @@ class EnvironmentApi:
         )
 
     @usage.method_logger
-    @decorators.catch_not_found(environment.Environment, "default")
-    def get_environment(self, name: str) -> environment.Environment:
+    @decorators.catch_not_found(environment.Environment, None)
+    def get_environment(self, name: str) -> Optional[environment.Environment]:
         """Get handle for a Python environment in the project
 
         ```python
