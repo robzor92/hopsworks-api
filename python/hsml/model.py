@@ -19,7 +19,7 @@ import logging
 import os
 import re
 import warnings
-from typing import Any, Dict, Optional, Union, Self
+from typing import Any, Dict, Optional, Union
 
 import humps
 from hopsworks_common import client, usage, util
