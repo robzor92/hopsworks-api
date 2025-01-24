@@ -25,7 +25,6 @@ import humps
 from hopsworks_common import client, usage, util
 from hopsworks_common.constants import ARTIFACT_VERSION, MODEL_REGISTRY
 from hopsworks_common.constants import INFERENCE_ENDPOINTS as IE
-from hsfs.feature_view import FeatureView
 from hsml import deployment
 from hsml.core import explicit_provenance
 from hsml.engine import model_engine
@@ -324,7 +323,7 @@ class Model:
         )
         return util.get_hostname_replaced_url(sub_path=path)
 
-    def get_feature_view(self, init: bool = True, online: Optional[bool] = None) -> FeatureView:
+    def get_feature_view(self, init: bool = True, online: Optional[bool] = None):
         """Get the parent feature view of this model, based on explicit provenance.
          Only accessible, usable feature view objects are returned. Otherwise an Exception is raised.
          For more details, call the base method - get_feature_view_provenance
