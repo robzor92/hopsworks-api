@@ -29,7 +29,8 @@ import pandas as pd
 from hopsworks_common import client
 from hopsworks_common.core.constants import HAS_NUMPY, HAS_POLARS
 from hsfs import engine
-from hsfs.core import storage_connector_api, explicit_provenance
+from hsfs.core import storage_connector_api
+from hsfs.core.explicit_provenance import Links
 
 
 if HAS_NUMPY:
@@ -195,7 +196,7 @@ class StorageConnector(ABC):
         """
         return {}
 
-    def get_feature_groups_provenance(self) -> explicit_provenance.Links:
+    def get_feature_groups_provenance(self) -> Links:
         """Get the generated feature groups using this storage connector, based on explicit
         provenance. These feature groups can be accessible or inaccessible. Explicit
         provenance does not track deleted generated feature group links, so deleted
