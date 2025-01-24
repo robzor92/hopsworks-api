@@ -42,7 +42,6 @@ from hsfs import (
     engine,
     feature,
     feature_group_writer,
-    storage_connector,
     tag,
     user,
     util,
@@ -703,7 +702,7 @@ class FeatureGroupBase:
         """
         return self._feature_group_engine.get_storage_connector_provenance(self)
 
-    def get_storage_connector(self) -> storage_connector.StorageConnector:
+    def get_storage_connector(self) -> "sc.StorageConnector":
         """Get the storage connector using this feature group, based on explicit
         provenance. Only the accessible storage connector is returned.
         For more items use the base method - get_storage_connector_provenance
