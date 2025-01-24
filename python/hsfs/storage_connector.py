@@ -30,7 +30,6 @@ from hopsworks_common import client
 from hopsworks_common.core.constants import HAS_NUMPY, HAS_POLARS
 from hsfs import engine
 from hsfs.core import storage_connector_api
-from hsfs.core.explicit_provenance import Links
 
 
 if HAS_NUMPY:
