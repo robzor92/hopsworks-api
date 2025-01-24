@@ -196,7 +196,7 @@ class StorageConnector(ABC):
         """
         return {}
 
-    def get_feature_groups_provenance(self) -> Links:
+    def get_feature_groups_provenance(self):
         """Get the generated feature groups using this storage connector, based on explicit
         provenance. These feature groups can be accessible or inaccessible. Explicit
         provenance does not track deleted generated feature group links, so deleted
