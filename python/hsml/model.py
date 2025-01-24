@@ -104,7 +104,7 @@ class Model:
         await_registration=480,
         keep_original_files=False,
         upload_configuration: Optional[Dict[str, Any]] = None,
-    ) -> Self:
+    ):
         """Persist this model including model files and metadata to the model registry.
 
         # Arguments
