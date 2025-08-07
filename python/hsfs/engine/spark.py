@@ -1049,6 +1049,12 @@ class Engine:
             data_format = "csv"
 
         path = self.setup_storage_connector(storage_connector, path)
+        print(data_format)
+        print(**write_options)
+        print(save_mode)
+        print(path)
+        print(feature_dataframe.count())
+        print(len(feature_dataframe.columns))
 
         feature_dataframe.write.format(data_format).options(**write_options).mode(
             save_mode
