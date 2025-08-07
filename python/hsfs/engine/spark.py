@@ -1050,7 +1050,7 @@ class Engine:
 
         path = self.setup_storage_connector(storage_connector, path)
         print(data_format)
-        print(**write_options)
+        print(write_options)
         print(save_mode)
         print(path)
         print(feature_dataframe.count())
