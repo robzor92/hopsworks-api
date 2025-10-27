@@ -54,7 +54,7 @@ dependencies = [
     "opensearch-py>=1.1.0,<=2.4.2",
     "tqdm",
     "grpcio>=1.49.1,<2.0.0",         # ^1.49.1
-    "protobuf>=4.25.4,<5.0.0",       # ^4.25.4
+    "protobuf,
     "packaging",         # ^21.0
 ]
 
