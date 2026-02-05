@@ -201,6 +201,10 @@ def login(
 
     trust_store_path = os.getenv("HOPSWORKS_TRUST_STORE_PATH", trust_store_path)
 
+    # If cert_folder not provided, check environment variable, then fall back to system temp directory
+    if cert_folder is None:
+        cert_folder = os.getenv("HOPSWORKS_CERT_FOLDER", tempfile.gettempdir())
+
     # This .hw_api_key is created when a user logs into Serverless Hopsworks the first time.
     # It is then used only for future login calls to Serverless. For other Hopsworks installations it's ignored.
     api_key_path = _get_cached_api_key_path()
@@ -232,6 +236,7 @@ def login(
                 api_key_file=api_key_path,
                 hostname_verification=hostname_verification,
                 trust_store_path=trust_store_path,
+                cert_folder=cert_folder,
             )
             _connected_project = _prompt_project(_hw_connection, project, is_app)
             if _connected_project:
@@ -272,6 +277,7 @@ def login(
             api_key_value=api_key,
             hostname_verification=hostname_verification,
             trust_store_path=trust_store_path,
+            cert_folder=cert_folder,
         )
         _connected_project = _prompt_project(_hw_connection, project, is_app)
         if _connected_project:
