@@ -50,6 +50,7 @@ class Client(base.Client):
     ):
         """Initializes a client in an external environment such as AWS Sagemaker."""
         _logger.info("Initializing external client")
+        _logger.info("Yee boyyyy")
         if not host:
             raise exceptions.ExternalClientError("host")
 
