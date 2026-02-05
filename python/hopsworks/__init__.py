@@ -202,6 +202,7 @@ def login(
     trust_store_path = os.getenv("HOPSWORKS_TRUST_STORE_PATH", trust_store_path)
 
     # If cert_folder not provided, check environment variable, then fall back to system temp directory
+    cert_folder=None
     if cert_folder is None:
         cert_folder = os.getenv("HOPSWORKS_CERT_FOLDER", tempfile.gettempdir())
 
