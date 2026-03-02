@@ -327,6 +327,42 @@ class DeltaEngine:
             _logger.debug(f"Internal client, using delta-rs location: {location}")
             return location
 
+    def _can_use_append(self, fg_source_table, dataset) -> bool:
+        """Return True if a plain append is safe (no partition overlap with existing data).
+
+        When the feature group has a partition key and none of the incoming
+        partition values are present in the existing Delta table, a merge is
+        unnecessary: every row is a new insert so appending produces the same
+        result with far less memory (no existing-partition scan for the join).
+
+        Falls back to False (i.e. use merge) on any error so correctness is
+        never compromised.
+        """
+        partition_key = self._feature_group.partition_key
+        if not partition_key:
+            return False
+        try:
+            import pyarrow.compute as pc
+
+            # Build a partition filter from the distinct values present in the
+            # incoming dataset — metadata-only query, no Parquet data is read.
+            filters = []
+            for col in partition_key:
+                unique_vals = [
+                    str(v) for v in pc.unique(dataset.column(col)).to_pylist()
+                ]
+                filters.append((col, "in", unique_vals))
+            matching_files = fg_source_table.file_uris(partition_filters=filters)
+            no_overlap = len(matching_files) == 0
+            _logger.debug(
+                f"Partition overlap check: incoming partitions={'|'.join(unique_vals)}, "
+                f"existing matching files={len(matching_files)}, use_append={no_overlap}"
+            )
+            return no_overlap
+        except Exception as e:
+            _logger.debug(f"Partition overlap check failed, falling back to merge: {e}")
+            return False
+
     def _write_delta_rs_dataset(
         self, dataset, write_options: Optional[Dict[str, Any]] = None
     ):
@@ -353,7 +389,13 @@ class DeltaEngine:
                 "Delta Lake (deltalake) and its dependencies are required for non-Spark operations. "
                 "Install 'hops-deltalake' to enable Delta RS features."
             ) from e
+        import os, psutil as _psutil
+        def _mem():
+            return _psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2
+
         location = self._get_delta_rs_location()
+        print(f"[MEM] _write_delta_rs_dataset: start  {_mem():.0f} MB", flush=True)
+
         is_polars_df = False
         if HAS_POLARS:
             import polars as pl
@@ -361,10 +403,14 @@ class DeltaEngine:
             if isinstance(dataset, pl.DataFrame):
                 is_polars_df = True
                 _logger.debug("Converting DataFrame to Arrow Table for Delta write")
+                print(f"[MEM] _write_delta_rs_dataset: before polars.to_arrow  {_mem():.0f} MB", flush=True)
                 dataset = dataset.to_arrow()
+                print(f"[MEM] _write_delta_rs_dataset: after  polars.to_arrow  {_mem():.0f} MB", flush=True)
 
         if not is_polars_df:
+            print(f"[MEM] _write_delta_rs_dataset: before _prepare_df_for_delta  {_mem():.0f} MB", flush=True)
             dataset = self._prepare_df_for_delta(dataset)
+            print(f"[MEM] _write_delta_rs_dataset: after  _prepare_df_for_delta  {_mem():.0f} MB", flush=True)
 
         try:
             fg_source_table = DeltaRsTable(location)
@@ -384,12 +430,14 @@ class DeltaEngine:
                     self.DELTA_ENABLE_CHANGE_DATA_FEED, "true"
                 )
             }
+            print(f"[MEM] _write_delta_rs_dataset: before deltars_write (first insert)  {_mem():.0f} MB", flush=True)
             deltars_write(
                 location,
                 dataset,
                 partition_by=self._feature_group.partition_key,
                 configuration=configuration,
             )
+            print(f"[MEM] _write_delta_rs_dataset: after  deltars_write (first insert)  {_mem():.0f} MB", flush=True)
         else:
             if (
                 isinstance(write_options, dict)
@@ -402,25 +450,43 @@ class DeltaEngine:
                         )
                     }
                 )
-            source_alias = (
-                f"{self._feature_group.name}_{self._feature_group.version}_source"
-            )
-            updates_alias = (
-                f"{self._feature_group.name}_{self._feature_group.version}_updates"
-            )
-            merge_query_str = self._generate_merge_query(source_alias, updates_alias)
 
-            (
-                fg_source_table.merge(
-                    source=dataset,
-                    predicate=merge_query_str,
-                    source_alias=updates_alias,
-                    target_alias=source_alias,
+            # Optimisation: if the feature group is partitioned and none of the
+            # incoming partition values already exist in the table, a plain append
+            # is equivalent to a merge (no rows to update) but avoids loading all
+            # existing partition data into memory for the join.
+            use_append = self._can_use_append(fg_source_table, dataset)
+            if use_append:
+                print(f"[MEM] _write_delta_rs_dataset: before deltars_write (append)  {_mem():.0f} MB", flush=True)
+                deltars_write(
+                    location,
+                    dataset,
+                    mode="append",
+                    partition_by=self._feature_group.partition_key,
                 )
-                .when_matched_update_all()
-                .when_not_matched_insert_all()
-                .execute()
-            )
+                print(f"[MEM] _write_delta_rs_dataset: after  deltars_write (append)  {_mem():.0f} MB", flush=True)
+            else:
+                source_alias = (
+                    f"{self._feature_group.name}_{self._feature_group.version}_source"
+                )
+                updates_alias = (
+                    f"{self._feature_group.name}_{self._feature_group.version}_updates"
+                )
+                merge_query_str = self._generate_merge_query(source_alias, updates_alias)
+
+                print(f"[MEM] _write_delta_rs_dataset: before merge.execute  {_mem():.0f} MB", flush=True)
+                (
+                    fg_source_table.merge(
+                        source=dataset,
+                        predicate=merge_query_str,
+                        source_alias=updates_alias,
+                        target_alias=source_alias,
+                    )
+                    .when_matched_update_all()
+                    .when_not_matched_insert_all()
+                    .execute()
+                )
+                print(f"[MEM] _write_delta_rs_dataset: after  merge.execute  {_mem():.0f} MB", flush=True)
         _logger.debug(
             f"Executed delta-rs write. Retrieving commit metadata for Delta table at {location}"
         )
@@ -453,15 +519,22 @@ class DeltaEngine:
         # Process timestamp columns
         if not isinstance(df, pd.DataFrame):
             return df
-        df_copy = df.copy()
-        for col in df_copy.select_dtypes(include=["datetime64"]).columns:
+        # `df` is already a shallow copy from convert_to_default_dataframe, so we do not
+        # need a full deep copy here.  Column assignments on a shallow copy update only the
+        # copy's column reference and never mutate the caller's original DataFrame.
+        for col in df.select_dtypes(include=["datetime64"]).columns:
             # For timezone-aware timestamps, convert to UTC and remove timezone info
-            if hasattr(df_copy[col].dtype, "tz") and df_copy[col].dtype.tz is not None:
-                df_copy[col] = df_copy[col].dt.tz_convert("UTC").dt.tz_localize(None)
+            if hasattr(df[col].dtype, "tz") and df[col].dtype.tz is not None:
+                df[col] = df[col].dt.tz_convert("UTC").dt.tz_localize(None)
 
         # Convert to basic PyArrow table first
         _logger.debug("Converting DataFrame to basic PyArrow Table")
-        table = pa.Table.from_pandas(df_copy, preserve_index=False)
+        import os as _os, psutil as _psutil2
+        def _mem2():
+            return _psutil2.Process(_os.getpid()).memory_info().rss / 1024 ** 2
+        print(f"[MEM] _prepare_df_for_delta: before pa.Table.from_pandas  {_mem2():.0f} MB", flush=True)
+        table = pa.Table.from_pandas(df, preserve_index=False)
+        print(f"[MEM] _prepare_df_for_delta: after  pa.Table.from_pandas  {_mem2():.0f} MB", flush=True)
 
         # Cast timestamp columns to the specified precision and float16 to float32
         _logger.debug("Casting timestamp and float16 columns if needed")

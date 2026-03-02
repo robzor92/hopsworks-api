@@ -996,21 +996,38 @@ class Engine:
         if feature_group_instance.partition_key:
             key_columns.extend(feature_group_instance.partition_key)
 
-        dataset = self._to_arrow_table(dataset)
-        # Verify all key columns exist
-        table_columns = dataset.column_names
-        missing_columns = [col for col in key_columns if col not in table_columns]
+        # Verify all key columns exist against the original dataframe — no conversion needed.
+        if isinstance(dataset, pd.DataFrame):
+            available_columns = list(dataset.columns)
+        elif HAS_POLARS and isinstance(dataset, pl.DataFrame):
+            available_columns = list(dataset.columns)
+        else:
+            available_columns = list(self._to_arrow_table(dataset).column_names)
+
+        missing_columns = [col for col in key_columns if col not in available_columns]
         if missing_columns:
             raise FeatureStoreException(
                 f"Key columns {missing_columns} are missing from the dataset. "
-                f"Available columns: {table_columns}"
+                f"Available columns: {available_columns}"
             )
 
+        import pyarrow as pa
         import pyarrow.compute as pc
+
+        # Convert only the key columns to Arrow — avoids transcoding all feature columns
+        # (including costly numpy-U → UTF-8 re-encoding) for a check that only needs keys.
+        print(f"[MEM] _check_duplicate_records: before key_table conversion  {self._mem_mb():.0f} MB", flush=True)
+        if isinstance(dataset, pd.DataFrame):
+            key_table = pa.Table.from_pandas(dataset[key_columns], preserve_index=False)
+        elif HAS_POLARS and isinstance(dataset, pl.DataFrame):
+            key_table = dataset.select(key_columns).to_arrow()
+        else:
+            key_table = self._to_arrow_table(dataset).select(key_columns)
+        print(f"[MEM] _check_duplicate_records: after  key_table conversion  {self._mem_mb():.0f} MB", flush=True)
 
         # Check for duplicates using PyArrow group_by
         # Group by key columns and count occurrences
-        grouped = dataset.group_by(key_columns).aggregate(
+        grouped = key_table.group_by(key_columns).aggregate(
             [
                 # The aggregation tuple structure: ([], function_name, FunctionOptions)
                 ([], "count_all", pc.CountOptions(mode="all"))
@@ -1053,6 +1070,12 @@ class Engine:
                 f"Sample duplicate key combinations:\n{sample_str}"
             )
 
+    @staticmethod
+    def _mem_mb():
+        import os
+        import psutil
+        return psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2
+
     def save_dataframe(
         self,
         feature_group: FeatureGroup,
@@ -1069,7 +1092,9 @@ class Engine:
             isinstance(feature_group, FeatureGroup)
             and feature_group.time_travel_format == "DELTA"
         ):
+            print(f"[MEM] save_dataframe: before _check_duplicate_records  {self._mem_mb():.0f} MB", flush=True)
             self._check_duplicate_records(dataframe, feature_group)
+            print(f"[MEM] save_dataframe: after  _check_duplicate_records  {self._mem_mb():.0f} MB", flush=True)
             _logger.debug("No duplicate records found. Proceeding with Delta write.")
 
         if (
@@ -1088,11 +1113,13 @@ class Engine:
                     spark_context=None,
                     spark_session=None,
                 )
+                print(f"[MEM] save_dataframe: before save_delta_fg  {self._mem_mb():.0f} MB", flush=True)
                 delta_engine_instance.save_delta_fg(
                     dataframe,
                     write_options=offline_write_options,
                     validation_id=validation_id,
                 )
+                print(f"[MEM] save_dataframe: after  save_delta_fg  {self._mem_mb():.0f} MB", flush=True)
         else:
             # for backwards compatibility
             return self.legacy_save_dataframe(
