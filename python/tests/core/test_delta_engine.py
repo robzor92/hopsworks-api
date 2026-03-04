@@ -1133,7 +1133,9 @@ class TestDeltaEngine:
         fake_write.assert_called_once()
         assert fake_write.call_args.kwargs.get("mode") == "append"
 
-    def test_write_delta_rs_uses_merge_when_overlap(self, mocker):
+    def test_write_delta_rs_uses_temp_parquet_merge_when_memory_insufficient(
+        self, mocker
+    ):
         # Arrange
         _patch_client(mocker, is_external=False)
         fg = _make_fg("hopsfs://nn:8020/projects/p1")
@@ -1142,21 +1144,149 @@ class TestDeltaEngine:
         fg.event_time = None
         engine = DeltaEngine(1, "fs", fg, None, None)
 
-        fake_write, fake_delta_table = self._setup_fake_deltalake(mocker)
+        fake_write, _ = self._setup_fake_deltalake(mocker)
         mocker.patch.object(
             engine, "_get_delta_rs_location", return_value="hdfs://nn/p"
         )
         mocker.patch.object(engine, "_can_use_append", return_value=False)
+        mocker.patch.object(engine, "_should_use_temp_parquet", return_value=True)
         mocker.patch.object(
             engine, "_get_last_commit_metadata", return_value=mock.Mock()
         )
+        fake_merge_via_temp = mocker.patch.object(engine, "_merge_via_temp_parquet")
+        fake_merge_in_memory = mocker.patch.object(engine, "_merge_in_memory")
 
         dataset = pa.table({"month": ["2024-01"], "id": [1]})
 
         # Act
         engine._write_delta_rs_dataset(dataset)
 
-        # Assert - merge executed, plain append not called
-        fake_delta_table.merge.assert_called_once()
-        fake_delta_table.merge.return_value.when_matched_update_all.return_value.when_not_matched_insert_all.return_value.execute.assert_called_once()
+        # Assert
+        fake_merge_via_temp.assert_called_once()
+        fake_merge_in_memory.assert_not_called()
         fake_write.assert_not_called()
+
+    def test_write_delta_rs_uses_in_memory_merge_when_memory_sufficient(self, mocker):
+        # Arrange
+        _patch_client(mocker, is_external=False)
+        fg = _make_fg("hopsfs://nn:8020/projects/p1")
+        fg.partition_key = ["month"]
+        fg.primary_key = ["id"]
+        fg.event_time = None
+        engine = DeltaEngine(1, "fs", fg, None, None)
+
+        fake_write, _ = self._setup_fake_deltalake(mocker)
+        mocker.patch.object(
+            engine, "_get_delta_rs_location", return_value="hdfs://nn/p"
+        )
+        mocker.patch.object(engine, "_can_use_append", return_value=False)
+        mocker.patch.object(engine, "_should_use_temp_parquet", return_value=False)
+        mocker.patch.object(
+            engine, "_get_last_commit_metadata", return_value=mock.Mock()
+        )
+        fake_merge_via_temp = mocker.patch.object(engine, "_merge_via_temp_parquet")
+        fake_merge_in_memory = mocker.patch.object(engine, "_merge_in_memory")
+
+        dataset = pa.table({"month": ["2024-01"], "id": [1]})
+
+        # Act
+        engine._write_delta_rs_dataset(dataset)
+
+        # Assert
+        fake_merge_in_memory.assert_called_once()
+        fake_merge_via_temp.assert_not_called()
+        fake_write.assert_not_called()
+
+    def test_should_use_temp_parquet_when_memory_insufficient(self, mocker):
+        _patch_client(mocker, is_external=False)
+        engine = DeltaEngine(1, "fs", _make_fg("hopsfs://nn/p"), None, None)
+
+        dataset = pa.table({"id": list(range(1000))})
+        # Report available memory less than dataset.nbytes * 2
+        fake_psutil = mocker.MagicMock()
+        fake_psutil.virtual_memory.return_value.available = dataset.nbytes - 1
+        mocker.patch.dict(sys.modules, {"psutil": fake_psutil})
+
+        assert engine._should_use_temp_parquet(dataset) is True
+
+    def test_should_not_use_temp_parquet_when_memory_sufficient(self, mocker):
+        _patch_client(mocker, is_external=False)
+        engine = DeltaEngine(1, "fs", _make_fg("hopsfs://nn/p"), None, None)
+
+        dataset = pa.table({"id": list(range(1000))})
+        # Report available memory well above dataset.nbytes * 2
+        fake_psutil = mocker.MagicMock()
+        fake_psutil.virtual_memory.return_value.available = dataset.nbytes * 10
+        mocker.patch.dict(sys.modules, {"psutil": fake_psutil})
+
+        assert engine._should_use_temp_parquet(dataset) is False
+
+    def test_should_use_temp_parquet_when_psutil_missing(self, mocker):
+        _patch_client(mocker, is_external=False)
+        engine = DeltaEngine(1, "fs", _make_fg("hopsfs://nn/p"), None, None)
+
+        dataset = pa.table({"id": [1]})
+        mocker.patch.dict(sys.modules, {"psutil": None})
+
+        assert engine._should_use_temp_parquet(dataset) is True
+
+    # ------------------------------------------------------------------
+    # _merge_via_temp_parquet unit tests
+    # ------------------------------------------------------------------
+
+    def test_merge_via_temp_parquet_writes_parquet_then_merges(self, mocker, tmp_path):
+        # Arrange
+        _patch_client(mocker, is_external=False)
+        fg = _make_fg("hopsfs://nn:8020/projects/p1")
+        fg.partition_key = ["month"]
+        fg.primary_key = ["id"]
+        fg.event_time = None
+        engine = DeltaEngine(1, "fs", fg, None, None)
+
+        fake_delta_table = mocker.MagicMock()
+        dataset = pa.table({"month": ["2024-01"], "id": [1]})
+
+        # Standard-library imports are cached in sys.modules so patching the
+        # module attribute is sufficient even for local imports inside the method.
+        mocker.patch("tempfile.mkdtemp", return_value=str(tmp_path))
+        fake_pq_write = mocker.patch("pyarrow.parquet.write_table")
+        fake_ds_dataset = mocker.patch("pyarrow.dataset.dataset")
+
+        # Act
+        engine._merge_via_temp_parquet(fake_delta_table, dataset, "hdfs://nn/p")
+
+        # Assert: Parquet written first, then merge called with a Dataset (not the table)
+        fake_pq_write.assert_called_once()
+        written_table = fake_pq_write.call_args[0][0]
+        assert written_table.equals(dataset)
+        fake_ds_dataset.assert_called_once()
+        fake_delta_table.merge.assert_called_once()
+        merge_source = (
+            fake_delta_table.merge.call_args.kwargs.get("source")
+            or fake_delta_table.merge.call_args[0][0]
+        )
+        assert merge_source is fake_ds_dataset.return_value
+
+    def test_merge_via_temp_parquet_cleans_up_on_merge_failure(self, mocker, tmp_path):
+        # Arrange
+        _patch_client(mocker, is_external=False)
+        fg = _make_fg("hopsfs://nn:8020/projects/p1")
+        fg.partition_key = []
+        fg.primary_key = ["id"]
+        fg.event_time = None
+        engine = DeltaEngine(1, "fs", fg, None, None)
+
+        fake_delta_table = mocker.MagicMock()
+        fake_delta_table.merge.side_effect = RuntimeError("merge failed")
+        dataset = pa.table({"id": [1]})
+
+        mocker.patch("tempfile.mkdtemp", return_value=str(tmp_path))
+        mocker.patch("pyarrow.parquet.write_table")
+        mocker.patch("pyarrow.dataset.dataset")
+        fake_rmtree = mocker.patch("shutil.rmtree")
+
+        # Act + Assert: error propagates but cleanup still runs
+        with pytest.raises(RuntimeError, match="merge failed"):
+            engine._merge_via_temp_parquet(fake_delta_table, dataset, "hdfs://nn/p")
+
+        fake_rmtree.assert_called_once_with(str(tmp_path), ignore_errors=True)

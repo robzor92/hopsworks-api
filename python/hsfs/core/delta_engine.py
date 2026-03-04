@@ -454,41 +454,181 @@ class DeltaEngine:
                     partition_by=self._feature_group.partition_key,
                 )
             else:
-                source_alias = (
-                    f"{self._feature_group.name}_{self._feature_group.version}_source"
-                )
-                updates_alias = (
-                    f"{self._feature_group.name}_{self._feature_group.version}_updates"
-                )
-                # Extract partition values from the in-memory dataset so
-                # _generate_merge_query can emit literal IN filters that let DataFusion
-                # prune Parquet files to only the overlapping partitions.  Zero I/O —
-                # the values come directly from the Arrow table already in memory.
-                partition_values = (
-                    self._get_partition_values(
-                        dataset, self._feature_group.partition_key
-                    )
-                    if self._feature_group.partition_key
-                    else None
-                )
-                merge_query_str = self._generate_merge_query(
-                    source_alias, updates_alias, partition_values
-                )
-                (
-                    fg_source_table.merge(
-                        source=dataset,
-                        predicate=merge_query_str,
-                        source_alias=updates_alias,
-                        target_alias=source_alias,
-                    )
-                    .when_matched_update_all()
-                    .when_not_matched_insert_all()
-                    .execute()
-                )
+                if self._should_use_temp_parquet(dataset):
+                    self._merge_via_temp_parquet(fg_source_table, dataset, location)
+                else:
+                    self._merge_in_memory(fg_source_table, dataset)
         _logger.debug(
             f"Executed delta-rs write. Retrieving commit metadata for Delta table at {location}"
         )
         return self._get_last_commit_metadata(self._spark_session, location)
+
+    def _should_use_temp_parquet(self, dataset: pa.Table) -> bool:
+        """Return True if available RAM is likely insufficient for an in-memory merge.
+
+        Compares available system memory against the incoming dataset size with a
+        safety multiplier to account for the hash table built by DataFusion during
+        the join.
+        Falls back to True (i.e. use temp Parquet) if psutil is not installed so
+        that correctness is never compromised.
+
+        Args:
+            dataset: Incoming data as a PyArrow Table.
+        """
+        # Conservative estimate: merge needs source data + hash table overhead.
+        required_bytes = dataset.nbytes * 2
+        try:
+            import psutil
+
+            available_bytes = psutil.virtual_memory().available
+            use_temp = available_bytes < required_bytes
+            _logger.debug(
+                f"Memory check: available={available_bytes / 1024**2:.1f} MB, "
+                f"estimated required={required_bytes / 1024**2:.1f} MB "
+                f"(dataset={dataset.nbytes / 1024**2:.1f} MB × 2), "
+                f"use_temp_parquet={use_temp}"
+            )
+            return use_temp
+        except ImportError:
+            _logger.debug(
+                "psutil not available — defaulting to temp-Parquet merge path "
+                f"(dataset={dataset.nbytes / 1024**2:.1f} MB)"
+            )
+            return True
+
+    def _merge_in_memory(self, fg_source_table, dataset: pa.Table) -> None:
+        """Execute a merge keeping the source dataset fully in memory.
+
+        Faster than the temp-Parquet path because it avoids disk I/O, but
+        requires enough RAM to hold the source data alongside DataFusion's
+        internal hash table for the join.
+
+        Args:
+            fg_source_table: Open DeltaTable handle for the feature group.
+            dataset: Incoming data as a PyArrow Table.
+        """
+        source_alias = (
+            f"{self._feature_group.name}_{self._feature_group.version}_source"
+        )
+        updates_alias = (
+            f"{self._feature_group.name}_{self._feature_group.version}_updates"
+        )
+        partition_values = (
+            self._get_partition_values(dataset, self._feature_group.partition_key)
+            if self._feature_group.partition_key
+            else None
+        )
+        merge_query_str = self._generate_merge_query(
+            source_alias, updates_alias, partition_values
+        )
+        _logger.debug(
+            f"Executing in-memory merge for {self._feature_group.name} "
+            f"v{self._feature_group.version} "
+            f"(dataset={dataset.nbytes / 1024**2:.1f} MB)"
+        )
+        (
+            fg_source_table.merge(
+                source=dataset,
+                predicate=merge_query_str,
+                source_alias=updates_alias,
+                target_alias=source_alias,
+            )
+            .when_matched_update_all()
+            .when_not_matched_insert_all()
+            .execute()
+        )
+
+    def _merge_via_temp_parquet(
+        self,
+        fg_source_table,
+        dataset: pa.Table,
+        location: str,
+        row_group_size: int = 100_000,
+    ) -> None:
+        """Execute a merge using a temporary Parquet file as the source dataset.
+
+        Writing the incoming data to Parquet before the merge lets DataFusion stream
+        both the source and the target in row-group batches instead of holding the
+        full Arrow table in memory during the hash join.
+        Peak RAM is reduced from O(new_data + existing_partition) to roughly
+        O(row_group_size × 2 + hash_table_for_smaller_join_side).
+
+        A single Delta commit is produced, so atomicity is unchanged compared to
+        the previous in-memory merge.
+
+        Args:
+            fg_source_table: Open DeltaTable handle for the feature group.
+            dataset: Incoming data as a PyArrow Table.
+            location: Delta table URI (used for logging only).
+            row_group_size: Rows per Parquet row group written to the temp file.
+                Controls the DataFusion scan batch size during the merge.
+        """
+        import shutil
+        import tempfile
+
+        import pyarrow.dataset as ds
+        import pyarrow.parquet as pq
+
+        source_alias = (
+            f"{self._feature_group.name}_{self._feature_group.version}_source"
+        )
+        updates_alias = (
+            f"{self._feature_group.name}_{self._feature_group.version}_updates"
+        )
+        # Extract partition values before we release the in-memory table so
+        # _generate_merge_query can still emit literal IN filters for DataFusion
+        # partition pruning on the target side.
+        partition_values = (
+            self._get_partition_values(dataset, self._feature_group.partition_key)
+            if self._feature_group.partition_key
+            else None
+        )
+        merge_query_str = self._generate_merge_query(
+            source_alias, updates_alias, partition_values
+        )
+
+        tmp_dir = tempfile.mkdtemp(prefix="hopsworks_delta_merge_")
+        try:
+            tmp_path = os.path.join(tmp_dir, "source.parquet")
+            _logger.debug(
+                f"Writing merge source ({len(dataset)} rows) to temp Parquet: {tmp_path}"
+            )
+            try:
+                pq.write_table(dataset, tmp_path, row_group_size=row_group_size)
+            except OSError:
+                # Temp dir filesystem is full; retry in the current working directory.
+                shutil.rmtree(tmp_dir, ignore_errors=True)
+                tmp_dir = tempfile.mkdtemp(
+                    prefix="hopsworks_delta_merge_", dir=os.getcwd()
+                )
+                tmp_path = os.path.join(tmp_dir, "source.parquet")
+                _logger.warning(
+                    f"Temp directory full, retrying merge source write in cwd: {tmp_path}"
+                )
+                pq.write_table(dataset, tmp_path, row_group_size=row_group_size)
+
+            # Release the in-memory Arrow table so PyArrow's memory pool can
+            # reclaim it before DataFusion starts the join scan.
+            del dataset
+
+            source_ds = ds.dataset(tmp_dir, format="parquet")
+            _logger.debug(
+                f"Executing streaming merge for {self._feature_group.name} "
+                f"v{self._feature_group.version} at {location}"
+            )
+            (
+                fg_source_table.merge(
+                    source=source_ds,
+                    predicate=merge_query_str,
+                    source_alias=updates_alias,
+                    target_alias=source_alias,
+                )
+                .when_matched_update_all()
+                .when_not_matched_insert_all()
+                .execute()
+            )
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
 
     @staticmethod
     def _prepare_df_for_delta(df, timestamp_precision="us"):
