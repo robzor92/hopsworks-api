@@ -30,10 +30,14 @@ from hsfs import feature_group, feature_group_commit, util
 from hsfs.core import feature_group_api, variable_api
 
 
+try:
+    import pyarrow as pa
+except ImportError:
+    pa = None  # type: ignore[assignment]
+
 if TYPE_CHECKING:
     import pandas as pd
     import polars as pl
-    import pyarrow as pa
     from hsfs.constructor import hudi_feature_group_alias
 
 # Note: Avoid importing optional Delta dependencies at module import time.
@@ -555,7 +559,6 @@ class DeltaEngine:
         import shutil
         import tempfile
 
-        import pyarrow.dataset as ds
         import pyarrow.parquet as pq
 
         source_alias = (
@@ -612,14 +615,21 @@ class DeltaEngine:
             # reclaim it before DataFusion starts the join scan.
             del dataset
 
-            source_ds = ds.dataset(tmp_dir, format="parquet")
+            # Read back from disk as a lazy RecordBatchReader (implements
+            # __arrow_c_stream__ as required by delta-rs merge).  iter_batches()
+            # reads one row group at a time from disk rather than loading the
+            # full file into memory, achieving O(min(N, M)) peak RAM for the join.
+            pf = pq.ParquetFile(tmp_path)
+            source_reader = pa.RecordBatchReader.from_batches(
+                pf.schema_arrow, pf.iter_batches(batch_size=row_group_size)
+            )
             _logger.debug(
                 f"Executing streaming merge for {self._feature_group.name} "
                 f"v{self._feature_group.version} at {location}"
             )
             (
                 fg_source_table.merge(
-                    source=source_ds,
+                    source=source_reader,
                     predicate=merge_query_str,
                     source_alias=updates_alias,
                     target_alias=source_alias,

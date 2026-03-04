@@ -1251,22 +1251,26 @@ class TestDeltaEngine:
         # module attribute is sufficient even for local imports inside the method.
         mocker.patch("tempfile.mkdtemp", return_value=str(tmp_path))
         fake_pq_write = mocker.patch("pyarrow.parquet.write_table")
-        fake_ds_dataset = mocker.patch("pyarrow.dataset.dataset")
+        # schema_arrow must be a real pa.Schema; iter_batches returns an empty iterator.
+        fake_pq_file = mocker.MagicMock()
+        fake_pq_file.schema_arrow = dataset.schema
+        fake_pq_file.iter_batches.return_value = iter([])
+        mocker.patch("pyarrow.parquet.ParquetFile", return_value=fake_pq_file)
 
         # Act
         engine._merge_via_temp_parquet(fake_delta_table, dataset, "hdfs://nn/p")
 
-        # Assert: Parquet written first, then merge called with a Dataset (not the table)
+        # Assert: Parquet written first, then merge called with a RecordBatchReader
         fake_pq_write.assert_called_once()
         written_table = fake_pq_write.call_args[0][0]
         assert written_table.equals(dataset)
-        fake_ds_dataset.assert_called_once()
+        fake_pq_file.iter_batches.assert_called_once()
         fake_delta_table.merge.assert_called_once()
         merge_source = (
             fake_delta_table.merge.call_args.kwargs.get("source")
             or fake_delta_table.merge.call_args[0][0]
         )
-        assert merge_source is fake_ds_dataset.return_value
+        assert isinstance(merge_source, pa.RecordBatchReader)
 
     def test_merge_via_temp_parquet_cleans_up_on_merge_failure(self, mocker, tmp_path):
         # Arrange
@@ -1283,7 +1287,10 @@ class TestDeltaEngine:
 
         mocker.patch("tempfile.mkdtemp", return_value=str(tmp_path))
         mocker.patch("pyarrow.parquet.write_table")
-        mocker.patch("pyarrow.dataset.dataset")
+        fake_pq_file = mocker.MagicMock()
+        fake_pq_file.schema_arrow = dataset.schema
+        fake_pq_file.iter_batches.return_value = iter([])
+        mocker.patch("pyarrow.parquet.ParquetFile", return_value=fake_pq_file)
         fake_rmtree = mocker.patch("shutil.rmtree")
 
         # Act + Assert: error propagates but cleanup still runs
