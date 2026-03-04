@@ -1210,16 +1210,17 @@ class TestDeltaEngine:
         assert engine._should_use_temp_parquet(dataset) is True
 
     def test_should_not_use_temp_parquet_when_memory_sufficient(self, mocker):
+        # TODO: assert False once the temporary hardcoding in _should_use_temp_parquet is removed.
         _patch_client(mocker, is_external=False)
         engine = DeltaEngine(1, "fs", _make_fg("hopsfs://nn/p"), None, None)
 
         dataset = pa.table({"id": list(range(1000))})
-        # Report available memory well above dataset.nbytes * 2
+        # Even with ample memory, always returns True while hardcoded.
         fake_psutil = mocker.MagicMock()
         fake_psutil.virtual_memory.return_value.available = dataset.nbytes * 10
         mocker.patch.dict(sys.modules, {"psutil": fake_psutil})
 
-        assert engine._should_use_temp_parquet(dataset) is False
+        assert engine._should_use_temp_parquet(dataset) is True
 
     def test_should_use_temp_parquet_when_psutil_missing(self, mocker):
         _patch_client(mocker, is_external=False)

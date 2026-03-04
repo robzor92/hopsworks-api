@@ -472,29 +472,18 @@ class DeltaEngine:
         Falls back to True (i.e. use temp Parquet) if psutil is not installed so
         that correctness is never compromised.
 
+        Note:
+            Temporarily hardcoded to always return True to force the temp-Parquet
+            path while the in-memory path is being validated.
+
         Args:
             dataset: Incoming data as a PyArrow Table.
         """
-        # Conservative estimate: merge needs source data + hash table overhead.
-        required_bytes = dataset.nbytes * 2
-        try:
-            import psutil
-
-            available_bytes = psutil.virtual_memory().available
-            use_temp = available_bytes < required_bytes
-            _logger.debug(
-                f"Memory check: available={available_bytes / 1024**2:.1f} MB, "
-                f"estimated required={required_bytes / 1024**2:.1f} MB "
-                f"(dataset={dataset.nbytes / 1024**2:.1f} MB × 2), "
-                f"use_temp_parquet={use_temp}"
-            )
-            return use_temp
-        except ImportError:
-            _logger.debug(
-                "psutil not available — defaulting to temp-Parquet merge path "
-                f"(dataset={dataset.nbytes / 1024**2:.1f} MB)"
-            )
-            return True
+        # TODO: re-enable psutil-based check once in-memory path is validated.
+        _logger.debug(
+            f"Forcing temp-Parquet merge path (dataset={dataset.nbytes / 1024**2:.1f} MB)"
+        )
+        return True
 
     def _merge_in_memory(self, fg_source_table, dataset: pa.Table) -> None:
         """Execute a merge keeping the source dataset fully in memory.
