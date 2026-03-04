@@ -594,7 +594,13 @@ class DeltaEngine:
                 f"Writing merge source ({len(dataset)} rows) to temp Parquet: {tmp_path}"
             )
             try:
-                pq.write_table(dataset, tmp_path, row_group_size=row_group_size)
+                pq.write_table(
+                    dataset,
+                    tmp_path,
+                    row_group_size=row_group_size,
+                    compression="zstd",
+                    compression_level=9,
+                )
             except OSError:
                 # Temp dir filesystem is full; retry in the current working directory.
                 shutil.rmtree(tmp_dir, ignore_errors=True)
@@ -605,7 +611,13 @@ class DeltaEngine:
                 _logger.warning(
                     f"Temp directory full, retrying merge source write in cwd: {tmp_path}"
                 )
-                pq.write_table(dataset, tmp_path, row_group_size=row_group_size)
+                pq.write_table(
+                    dataset,
+                    tmp_path,
+                    row_group_size=row_group_size,
+                    compression="zstd",
+                    compression_level=9,
+                )
 
             # Release the in-memory Arrow table so PyArrow's memory pool can
             # reclaim it before DataFusion starts the join scan.
