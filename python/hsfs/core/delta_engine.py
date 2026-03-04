@@ -46,6 +46,22 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 
+def _log_rss(label: str) -> None:
+    """Log current process RSS memory at DEBUG level.
+
+    No-op if psutil is not installed or if DEBUG logging is not enabled.
+    """
+    if not _logger.isEnabledFor(logging.DEBUG):
+        return
+    try:
+        import psutil
+
+        rss = psutil.Process().memory_info().rss / 1024**2
+        _logger.debug(f"[MEM] {label}: RSS={rss:.1f} MB")
+    except ImportError:
+        pass
+
+
 class DeltaEngine:
     DELTA_SPARK_FORMAT = "delta"
     DELTA_QUERY_TIME_TRAVEL_AS_OF_INSTANT = "timestampAsOf"
@@ -396,6 +412,8 @@ class DeltaEngine:
 
         location = self._get_delta_rs_location()
 
+        _log_rss("before DataFrame→Arrow conversion")
+
         is_polars_df = False
         if HAS_POLARS:
             import polars as pl
@@ -407,6 +425,10 @@ class DeltaEngine:
 
         if not is_polars_df:
             dataset = self._prepare_df_for_delta(dataset)
+
+        _log_rss(
+            f"after DataFrame→Arrow conversion ({dataset.nbytes / 1024**2:.1f} MB Arrow table)"
+        )
 
         try:
             fg_source_table = DeltaRsTable(location)
@@ -451,17 +473,20 @@ class DeltaEngine:
             # existing partition data into memory for the join.
             use_append = self._can_use_append(fg_source_table, dataset)
             if use_append:
+                _log_rss("before append write")
                 deltars_write(
                     location,
                     dataset,
                     mode="append",
                     partition_by=self._feature_group.partition_key,
                 )
+                _log_rss("after append write")
             else:
                 if self._should_use_temp_parquet(dataset):
                     self._merge_via_temp_parquet(fg_source_table, dataset, location)
                 else:
                     self._merge_in_memory(fg_source_table, dataset)
+        _log_rss("after delta-rs write")
         _logger.debug(
             f"Executed delta-rs write. Retrieving commit metadata for Delta table at {location}"
         )
@@ -585,6 +610,7 @@ class DeltaEngine:
             _logger.debug(
                 f"Writing merge source ({len(dataset)} rows) to temp Parquet: {tmp_path}"
             )
+            _log_rss("before writing dataset to temp Parquet")
             try:
                 pq.write_table(
                     dataset,
@@ -614,6 +640,7 @@ class DeltaEngine:
             # Release the in-memory Arrow table so PyArrow's memory pool can
             # reclaim it before DataFusion starts the join scan.
             del dataset
+            _log_rss("after releasing in-memory Arrow table (dataset deleted)")
 
             # Read back from disk as a lazy RecordBatchReader (implements
             # __arrow_c_stream__ as required by delta-rs merge).  iter_batches()
@@ -627,6 +654,7 @@ class DeltaEngine:
                 f"Executing streaming merge for {self._feature_group.name} "
                 f"v{self._feature_group.version} at {location}"
             )
+            _log_rss("before merge execution")
             (
                 fg_source_table.merge(
                     source=source_reader,
@@ -638,6 +666,7 @@ class DeltaEngine:
                 .when_not_matched_insert_all()
                 .execute()
             )
+            _log_rss("after merge execution")
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
 
