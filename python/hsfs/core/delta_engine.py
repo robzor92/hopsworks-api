@@ -47,17 +47,15 @@ _logger = logging.getLogger(__name__)
 
 
 def _log_rss(label: str) -> None:
-    """Log current process RSS memory at DEBUG level.
+    """Log current process RSS memory at INFO level.
 
-    No-op if psutil is not installed or if DEBUG logging is not enabled.
+    No-op if psutil is not installed.
     """
-    if not _logger.isEnabledFor(logging.DEBUG):
-        return
     try:
         import psutil
 
         rss = psutil.Process().memory_info().rss / 1024**2
-        _logger.debug(f"[MEM] {label}: RSS={rss:.1f} MB")
+        _logger.info(f"[MEM] {label}: RSS={rss:.1f} MB")
     except ImportError:
         pass
 
