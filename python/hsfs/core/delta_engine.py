@@ -15,6 +15,7 @@
 #
 from __future__ import annotations
 
+import gc
 import logging
 import os
 import warnings
@@ -635,10 +636,16 @@ class DeltaEngine:
                     compression_level=9,
                 )
 
-            # Release the in-memory Arrow table so PyArrow's memory pool can
-            # reclaim it before DataFusion starts the join scan.
+            # Release the in-memory Arrow table.  PyArrow's allocator (jemalloc /
+            # mimalloc) retains freed buffers in its pool rather than returning them
+            # to the OS immediately, so del alone does not reduce RSS.  Calling
+            # gc.collect() resolves any cyclic references and
+            # pa.default_memory_pool().release_unused() explicitly hands the pooled
+            # buffers back to the OS before DataFusion starts the join scan.
             del dataset
-            _log_rss("after releasing in-memory Arrow table (dataset deleted)")
+            gc.collect()
+            pa.default_memory_pool().release_unused()
+            _log_rss("after releasing in-memory Arrow table and flushing memory pool")
 
             # Read back from disk as a lazy RecordBatchReader (implements
             # __arrow_c_stream__ as required by delta-rs merge).  iter_batches()
